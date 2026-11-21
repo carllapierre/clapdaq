@@ -206,6 +206,7 @@ setTimeout(function(){if(!window.__booted)window.__showErr('The 3D engine did no
       Clap enough and the robots come. Clap harder and you start proving theorems.<br>They will smile. They will not blink. Their eyes follow your cursor.
     </div>
     <div id="best"></div>
+    <div style="margin-top:8px;font-size:10.5px;opacity:.45">Characters: Microsoft Rocketbox avatars (MIT) · Robots: three.js Xbot</div>
   </div>
 </div>
 
@@ -242,6 +243,7 @@ import {OutputPass} from 'three/addons/postprocessing/OutputPass.js';
 import {Reflector} from 'three/addons/objects/Reflector.js';
 import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
 import {RectAreaLightUniformsLib} from 'three/addons/lights/RectAreaLightUniformsLib.js';
+import {MeshoptDecoder} from 'three/addons/libs/meshopt_decoder.module.js';
 window.__booted=true;
 
 const ASSET_BASE='https://cdn.jsdelivr.net/gh/mrdoob/three.js@0245b6dad700ecc32f145dfa495c55e41fc75db7/examples/models/gltf/';
@@ -666,7 +668,10 @@ function updateConfetti(dt,t){
 const ASSETS={};
 const V3=()=>new THREE.Vector3(),QT=()=>new THREE.Quaternion();
 const tv1=V3(),tv2=V3(),tv3=V3(),tq1=QT(),tq2=QT(),tq3=QT(),tm1=new THREE.Matrix4(),tm2=new THREE.Matrix4(),tb1=V3(),tb2=V3(),tb3=V3();
-const findBone=(root,n)=>{let f=null;root.traverse(o=>{if(!f&&o.isBone&&o.name.replace(/^mixamorig:?/,'')===n)f=o;});return f;};
+const BONE_ALIAS={Spine:'Bip01_Spine',Spine1:'Bip01_Spine1',Spine2:'Bip01_Spine2',Neck:'Bip01_Neck',Head:'Bip01_Head',LeftArm:'Bip01_L_UpperArm',LeftForeArm:'Bip01_L_Forearm',LeftHand:'Bip01_L_Hand',
+  RightArm:'Bip01_R_UpperArm',RightForeArm:'Bip01_R_Forearm',RightHand:'Bip01_R_Hand',LeftHandMiddle1:'Bip01_L_Finger2',RightHandMiddle1:'Bip01_R_Finger2',LeftHandThumb1:'Bip01_L_Finger0',RightHandThumb1:'Bip01_R_Finger0',
+  LeftEye:'Bip01_LEye',RightEye:'Bip01_REye',LeftShoulder:'Bip01_L_Clavicle',RightShoulder:'Bip01_R_Clavicle'};
+const findBone=(root,n)=>{let f=null;const alt=BONE_ALIAS[n];root.traverse(o=>{if(!f&&o.isBone){const nm=o.name.replace(/^mixamorig:?/,'');if(nm===n||nm===alt)f=o;}});return f;};
 function setWorldQ(bone,wq){bone.parent.getWorldQuaternion(tq3).invert();bone.quaternion.copy(tq3.multiply(wq));bone.updateMatrixWorld(true);}
 function aimBone(bone,child,dir){
   const bp=bone.getWorldPosition(tv1),cur=child.getWorldPosition(tv2).sub(bp);const l=cur.length();if(l<1e-6)return;cur.divideScalar(l);
@@ -700,7 +705,10 @@ function clothMat(src,col){
 }
 const skinCache=new Map();
 function skinMat(src,col,opts){const k=src.uuid+col+JSON.stringify(opts||{});if(skinCache.has(k))return skinCache.get(k);const m=src.clone();m.color=new THREE.Color(col);if(opts)Object.assign(m,opts);skinCache.set(k,m);return m;}
-let eyeGlowMat=null,porcelain=null,porcelainJoint=null;
+let porcelain=null,porcelainJoint=null;
+const GLOW_GEO=new THREE.SphereGeometry(.0062,10,8),GLOW_MAT=new THREE.MeshBasicMaterial({color:new THREE.Color(7,.3,.15),toneMapped:false});
+const paleCache=new Map();
+function paleMat(src){if(paleCache.has(src.uuid))return paleCache.get(src.uuid);const m=src.clone();m.color=new THREE.Color(1.32,1.24,1.22);m.roughness=.32;paleCache.set(src.uuid,m);return m;}
 
 const chars=[];
 class Person{
@@ -716,22 +724,17 @@ class Person{
     this.tiltAmp=rand(.4,1.8);this.exorcist=0;this.pointT=0;this.pointTgt=0;this.glance=0;this.glanceT=rand(4,8);this.spasm=0;this.spasmAmt=0;this.walkIn=!!o.walkIn;
     this.phase=Math.random();this.lastK=-1;
     this.smile=o.smile??.7;this.mouthOpen=o.mouthOpen??.15;
-    const src=this.kind==='xbot'?ASSETS.xbot:ASSETS.rpm;
+    const src=this.kind==='xbot'?ASSETS.xbot:(ASSETS.av[o.avatar]||ASSETS.av[AV_FRONT[2]]);
     this.root=SkeletonUtils.clone(src.scene);
     this.g=new THREE.Group();this.g.add(this.root);this.g.scale.setScalar(o.scale||1);
-    this.morphs=[];
+    this.morphs=[];this.asym=(this.tier>=0&&Math.random()<.3)?rand(.45,1.5):1;
     this.root.traverse(m=>{
       if(!m.isMesh)return;
       m.castShadow=true;m.receiveShadow=true;m.frustumCulled=false;
-      if(m.morphTargetDictionary&&m.morphTargetDictionary.mouthSmile!==undefined)this.morphs.push(m);
-      const n=m.name;m.userData.srcMat=m.material;this.parts=this.parts||{top:[],bottom:[],skin:[],hat:null,beard:null};
       if(this.kind==='xbot'){m.material=/Joints/.test(m.material.name)?porcelainJoint:porcelain;return;}
-      if(/Outfit_Top/.test(n)){m.material=clothMat(m.material,o.suit);this.parts.top.push(m);}
-      else if(/Outfit_Bottom/.test(n)){m.material=clothMat(m.material,o.pants||o.suit);this.parts.bottom.push(m);}
-      else if(/Wolf3D_Skin|Wolf3D_Body/.test(n)){m.material=skinMat(m.material,o.skin||'#ffffff',o.skinOpts);this.parts.skin.push(m);}
-      else if(/Headwear/.test(n)){m.visible=!!o.hat;this.parts.hat=m;}
-      else if(/Beard/.test(n)){m.visible=o.beard!==false;this.parts.beard=m;}
-      else if(/Eye(Left|Right)/.test(n)){if(o.eyeGlow)m.material=eyeGlowMat;m.userData.baseMat=m.material;(this.eyeMeshes||(this.eyeMeshes=[])).push(m);}
+      if(m.morphTargetDictionary&&m.morphTargetDictionary.smileL!==undefined)this.morphs.push(m);
+      if(o.pale&&m.material.name==='head')m.material=paleMat(m.material);
+      if(m.material.name==='opacity'||m.material.name==='glasses')m.castShadow=false;
     });
     const r=this.rig={};for(const b of RIG_BONES)r[b]=findBone(this.root,b);
     this.g.updateMatrixWorld(true);
@@ -741,20 +744,14 @@ class Person{
     if(o.eyeScale&&r.LeftEye){r.LeftEye.scale.setScalar(o.eyeScale);r.RightEye.scale.setScalar(o.eyeScale);}
     scene.add(this.g);chars.push(this);
   }
-  becomeCEO(){
-    if(this.kind==='xbot'||this.isCEO||this.becameCEO||!ceo||!this.parts)return false;this.becameCEO=true;const L=ceo.o;
-    for(const m of this.parts.top)m.material=clothMat(m.userData.srcMat,L.suit);
-    for(const m of this.parts.bottom)m.material=clothMat(m.userData.srcMat,L.suit);
-    for(const m of this.parts.skin)m.material=skinMat(m.userData.srcMat,L.skin,this.o.skinOpts);
-    if(this.parts.hat)this.parts.hat.visible=true;if(this.parts.beard)this.parts.beard.visible=true;return true;
-  }
-  setGlow(on){for(const m of this.eyeMeshes||[])m.material=on?eyeGlowMat:m.userData.baseMat;}
+  setGlow(on){this.blackGlow=on;}
+  removeGlow(){if(this.glowS)for(const x of this.glowS)scene.remove(x);}
   place(x,y,z,ry=0){this.baseZ=z;this.zOff=0;this.baseX=x;this.g.position.set(x,y,z);if(this.walkIn){this.spawn=1;this.walkT=0;this.g.position.x=x+(x<0?-7:7);}this.g.rotation.y=ry;this.baseY=y;if(this.spawn<1)this.g.position.y=y-2.4;}
   clap(h=1){this.clapT=0;this.pulse=1;if(this.isCEO){this.wind=.75+.3*clamp(h,0,2);this.hop=.006*h;}}
   kill(){this.dying=true;this.dieT=0;}
   update(dt,ctx){
     const t=ctx.t,g=this.g;
-    if(this.dying){this.dieT+=dt;g.position.y=this.baseY-3*this.dieT*this.dieT;if(this.dieT>1.4){scene.remove(g);this.dead=true;}return;}
+    if(this.dying){this.dieT+=dt;g.position.y=this.baseY-3*this.dieT*this.dieT;if(this.dieT>1.4){scene.remove(g);this.dead=true;this.removeGlow();}return;}
     if(this.walkIn&&this.walkT<1){this.walkT=Math.min(1,this.walkT+dt/2.4);const k=1-Math.pow(1-this.walkT,2);this.g.position.x+=(this.baseX-this.g.position.x)*Math.min(1,dt*2.2);this.g.position.y=this.baseY+Math.abs(Math.sin(this.walkT*30))*.04*(1-this.walkT);}
     if(this.spawn<1){this.spawn=Math.min(1,this.spawn+dt/1.3);const e=1-Math.pow(1-this.spawn,3);g.position.y=this.baseY-2.4*(1-e);}
     const creepy=this.tier>=0,frozen=creepy&&(ctx.halted||ctx.stare>0),watching=ctx.halted||ctx.stare>0||ctx.idle||ctx.blackout>0;
@@ -836,18 +833,39 @@ class Person{
         const ey=clamp(Math.atan2(_lv.x,_lv.z)-this.hYaw,-.45,.45),ex=clamp(-Math.atan2(_lv.y,Math.hypot(_lv.x,_lv.z))-this.hPitch,-.35,.35);
         rotRel(e,cq,ex,ey,0);
       }
+      if(this.o.eyeGlow||this.blackGlow){
+        if(!this.glowS)this.glowS=[0,1].map(()=>{const x=new THREE.Mesh(GLOW_GEO,GLOW_MAT);scene.add(x);return x;});
+        [r.LeftEye,r.RightEye].forEach((e,i)=>{const x=this.glowS[i];e.getWorldPosition(_t1);_t2.subVectors(T,_t1).normalize();x.position.copy(_t1).addScaledVector(_t2,.0105*this.g.scale.x);x.scale.setScalar(this.g.scale.x*(this.o.eyeGlow?1:.8));x.visible=true;});
+      }else if(this.glowS)for(const x of this.glowS)x.visible=false;
     }
-    if(this.spasm>0){this.spasm-=ctx.dt;this.spasmAmt+=(this.spasmTo-this.spasmAmt)*Math.min(1,ctx.dt*25);}else{this.spasmAmt*=Math.exp(-ctx.dt*6);if(Math.random()<ctx.dt*(creepy?.12:.03+ctx.creepMix*.1)){this.spasm=rand(.15,.6);this.spasmTo=rand(1.5,3.5);}}
-    // smiles are driven by how much clapping is happening: silence = dead faces, frenzy = stretched grins
-    this.pulse=(this.pulse||0)*Math.exp(-ctx.dt*5);
-    const E=ctx.energy,base=this.smile+(creepy?ctx.creepMix*1.2:ctx.creepMix*2.4);
-    const sm=base*(.08+.92*E)+E*E*(creepy?2.2:1.2)+this.pulse*(.4+1.1*E)+this.spasmAmt;
-    const mo=(this.mouthOpen+.25*this.laugh*Math.abs(Math.sin(t*8+this.seed))*(creepy?0:1))*(.1+.9*E)+E*E*.5+this.pulse*.25*E+this.spasmAmt*.25;
-    let SM=sm,MO=mo;
-    if(this.tier===SMILER){SM+=E*E*4.5+ctx.creepMix*1.5;MO+=E*1.8+ctx.creepMix*.6;}
-    if(this.isCEO){const f=1-Math.min(1,ctx.creepMix*1.15);SM*=f;MO=MO*f+ctx.creepMix*.3;}
-    if(creepy&&r.LeftEye){const es=(this.o.eyeScale||1)*(1+E*.1),ey=es*(1+(this.tier===SMILER?E*.4:E*.12));r.LeftEye.scale.set(es,ey,es);r.RightEye.scale.set(es,ey,es);}
-    for(const m of this.morphs){const d=m.morphTargetDictionary;m.morphTargetInfluences[d.mouthSmile]=SM;m.morphTargetInfluences[d.mouthOpen]=MO;}
+    // ---- face: progressive, clap-driven, extreme ----
+    const dtt=ctx.dt;
+    if(this.spasm>0){this.spasm-=dtt;this.spasmAmt+=(this.spasmTo-this.spasmAmt)*Math.min(1,dtt*25);}
+    else{this.spasmAmt*=Math.exp(-dtt*6);if(Math.random()<dtt*(creepy?.14:.02+ctx.creepMix*.12)){this.spasm=rand(.15,.5);this.spasmTo=creepy?rand(1.2,2+2.2*ctx.prog):rand(.6,1.6+2*ctx.creepMix);}}
+    this.pulse=(this.pulse||0)*Math.exp(-dtt*5);
+    const E=ctx.energy,P=ctx.prog;
+    let S,open,wide,frown=0;
+    if(creepy){
+      const base=(this.o.base||1.5)*(.45+.55*P)+ctx.creepMix*1.2;
+      S=base*(.1+.9*E)+E*E*(.3+3.8*P)+this.pulse*(.5+1.3*E)*(.5+.5*P);
+      open=E*E*(.1+.4*P)+this.pulse*.12*E;
+      wide=.25+E*.5+P*.5;
+      if(this.tier===SMILER){S+=E*E*1.2+.6;open+=.25+E*.6;wide+=.4;}
+      if(this.oddball)S=Math.max(S,2.4+2.2*P);
+      S=Math.min(S,this.tier===SMILER?6.2:5.4);
+    }else{
+      S=(.55+ctx.creepMix*2.6)*(.15+.85*E)+E*E*(.6+2.2*P*ctx.creepMix)+this.pulse*(.3+.6*E)+.25*this.laugh;
+      open=E*.15+this.laugh*.12*Math.abs(Math.sin(t*8+this.seed));wide=.05+E*.15+ctx.creepMix*.4;
+      if(this.isCEO){const f=1-Math.min(1,ctx.creepMix*1.15);S*=f;frown=ctx.creepMix*.9;open=open*f+ctx.creepMix*.25;wide+=ctx.creepMix*.6;}
+    }
+    S+=this.spasmAmt;
+    this.S=(this.S||0)+(S-(this.S||0))*Math.min(1,dtt*7);S=this.S;
+    let blink=0;if(!creepy){this.blinkT=(this.blinkT??rand(1,4))-dtt;if(this.blinkT<0)this.blinkT=rand(2,5);blink=this.blinkT<.13?1:0;}
+    const v={smileL:S,smileR:S*this.asym,corner:S*.5,hbSmile:S*.4,cheekL:Math.min(S,2)*.5,cheekR:Math.min(S,2)*.5,
+      stretchL:Math.max(0,S-1)*.5,stretchR:Math.max(0,S-1)*.5,upL:Math.max(0,S-2)*.4,upR:Math.max(0,S-2)*.4,
+      lowL:Math.max(0,S-3.5)*.2+open*.3,lowR:Math.max(0,S-3.5)*.2+open*.3,lipStretch:Math.max(0,S-2)*.4,dimpleL:S*.3,dimpleR:S*.3,
+      wideL:wide,wideR:wide,jaw:open,blinkL:blink,blinkR:blink,frownL:frown,frownR:frown,browUp:frown*.7+(creepy?P*.4:0)};
+    for(const m of this.morphs){const d=m.morphTargetDictionary,inf=m.morphTargetInfluences;for(const k in v){const ix=d[k];if(ix!==undefined)inf[ix]=v[k];}}
   }
 }
 const _up=new THREE.Vector3(0,1,0),_fw=V3(),_lf=V3(),_s1=V3(),_s2=V3(),_ch=V3(),_S=V3(),_Ht=V3(),_dd=V3(),_dir=V3(),_pole=V3(),_E=V3(),_Hp=V3(),_t1=V3(),_t2=V3(),_lv=V3(),_cq2=QT();
@@ -857,15 +875,10 @@ const FRONT_X=[-1.36,-.68,0,.68,1.36];
 let ceo=null;
 const SUITS={navy:'#1b2a52',maroon:'#4e1624',brown:'#5d3e25',charcoal:'#26282e',grey:'#5a606b',black:'#0c0c0e',cream:'#b8ab95',olive:'#4a5232'};
 const SKINS=['#ffffff','#f1d5c0','#d9ac8c','#a87452','#7a4f35'];
+const AV_FRONT=['Business_Female_01','Business_Female_02','Business_Male_02','Female_Adult_09','Business_Male_01'];
+const AV_ALL=[...AV_FRONT,'Business_Female_03','Business_Male_03','Business_Female_04','Male_Adult_03','Business_Male_05','Business_Male_06'];
 function buildFront(){
-  const looks=[
-    {suit:SUITS.brown,skin:SKINS[1],beard:false,hat:false,smile:1.25,mouthOpen:.45},
-    {suit:SUITS.maroon,skin:SKINS[0],beard:false,hat:true,smile:1.4,mouthOpen:.55},
-    {ceo:true,suit:SUITS.navy,skin:SKINS[1],beard:true,hat:true,smile:1.5,mouthOpen:.6},
-    {suit:SUITS.cream,skin:SKINS[3],beard:true,hat:false,smile:1.3,mouthOpen:.5},
-    {suit:SUITS.charcoal,skin:SKINS[2],beard:false,hat:true,smile:1.2,mouthOpen:.4},
-  ];
-  looks.forEach((lk,i)=>{const p=new Person({...lk,employee:!lk.ceo});p.place(FRONT_X[i],0,0,(i-2)*-.06);if(lk.ceo)ceo=p;});
+  AV_FRONT.forEach((a,i)=>{const c=i===2;const p=new Person({avatar:a,employee:!c,ceo:c});p.place(FRONT_X[i],0,0,(i-2)*-.06);if(c)ceo=p;});
 }
 // back rows on risers
 const SLOTS=[];
@@ -880,16 +893,23 @@ function ensureRiser(r){
   const led=new THREE.Mesh(new THREE.BoxGeometry(w,.012,.01),lm);led.position.set(0,.3*r-.01,-.78*r+.395);scene.add(led);
   risers[r]=m;
 }
+const hireAv=()=>{const k=Object.keys(ASSETS.av).filter(a=>a!==AV_FRONT[2]);return pick(k.length?k:AV_FRONT);};
 function tierLook(i){
   switch(TIERS[i].id){
-    case 'intern':return {suit:pick([SUITS.grey,SUITS.olive,SUITS.cream]),skin:pick(SKINS),beard:Math.random()<.4,hat:Math.random()<.3,smile:rand(1.8,2.6),mouthOpen:rand(.3,.7),eyeScale:rand(1,1.12)};
-    case 'assoc':return {suit:pick([SUITS.maroon,SUITS.brown]),skin:pick(SKINS),beard:Math.random()<.3,hat:false,smile:rand(2.6,3.4),mouthOpen:rand(.5,.9),eyeScale:rand(1.05,1.18)};
-    case 'vp':return {suit:SUITS.navy,skin:pick(SKINS),beard:false,hat:false,smile:rand(3.3,4.2),mouthOpen:rand(.4,1),eyeScale:rand(1.12,1.25)};
-    case 'board':return {suit:SUITS.charcoal,skin:pick(SKINS.slice(0,3)),beard:true,hat:false,smile:rand(4,4.8),mouthOpen:rand(.2,.6),eyeScale:rand(1.18,1.3)};
+    case 'intern':return {avatar:hireAv(),base:rand(1.1,1.6)};
+    case 'assoc':return {avatar:hireAv(),base:rand(1.7,2.3)};
+    case 'vp':return {avatar:hireAv(),base:rand(2.2,2.8)};
+    case 'board':return {avatar:hireAv(),base:rand(2.7,3.3)};
     case 'clone':return {kind:'xbot'};
     case 'robot':return {kind:'xbot',walkIn:true,scale:rand(.92,1.05)};
-    case 'smiler':return {suit:SUITS.black,skin:'#e6e2df',skinOpts:{roughness:.35},beard:false,hat:false,smile:rand(5.8,7),mouthOpen:rand(1,1.4),eyeScale:rand(1.3,1.45),eyeGlow:true,scale:rand(1.08,1.16)};
+    case 'smiler':return {avatar:hireAv(),base:rand(3.4,4),pale:true,eyeGlow:true,scale:rand(1.06,1.12)};
   }
+}
+function convertToCEO(p){
+  const sl=SLOTS.find(x=>x.occ===p);if(!sl||!ASSETS.av[AV_FRONT[2]])return false;
+  const n=new Person({avatar:AV_FRONT[2],base:p.o.base||2,tier:p.tier,creep:p.creep,pale:p.o.pale,eyeGlow:p.o.eyeGlow,scale:p.o.scale});
+  n.place(p.baseX??p.g.position.x,p.baseY,p.baseZ,p.g.rotation.y);n.zOff=p.zOff||0;n.becameCEO=true;n.S=p.S;n.g.position.z=p.g.position.z;
+  scene.remove(p.g);p.dead=true;p.removeGlow();sl.occ=n;return true;
 }
 const MAX_VISIBLE=SLOTS.length;
 const rankOf=t=>t===ROBOT?-1:t;
@@ -1093,7 +1113,7 @@ function refreshShop(){
 }
 
 // ---------- flow ----------
-const ctx={stalker:null,energy:0,dt:0,closeup:null,idle:false,blackout:0,creepMix:0,t:0,syncT:0,rateMult:1,halted:false,stare:0,hype:0,mouse:new THREE.Vector3(0,2,6),cam:camera.position,claps:0,softClaps:0,trading:false,creepIndex:0};
+const ctx={prog:0,stalker:null,energy:0,dt:0,closeup:null,idle:false,blackout:0,creepMix:0,t:0,syncT:0,rateMult:1,halted:false,stare:0,hype:0,mouse:new THREE.Vector3(0,2,6),cam:camera.position,claps:0,softClaps:0,trading:false,creepIndex:0};
 let introT=0;
 function startGame(){
   const tk=$('inTicker').value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,10);
@@ -1229,15 +1249,21 @@ try{const best=JSON.parse(store.get('clapdaq_best')||'{}');const top=Object.entr
 // ---------- asset loading ----------
 const manager=new THREE.LoadingManager();
 manager.onProgress=(url,done,total)=>{$('loadBar').firstChild.style.width=(done/total*100)+'%';};
+const AV_URLS=n=>[`assets/avatars/${n}.glb`,`https://cdn.jsdelivr.net/gh/carllapierre/clapdaq@main/assets/avatars/${n}.glb`];
+function prepAvatar(g){g.scene.traverse(o=>{if(o.isMesh&&o.material){
+  if(o.material.name==='body'&&o.geometry.morphAttributes.position){o.geometry.morphAttributes={};o.morphTargetInfluences=undefined;o.morphTargetDictionary=undefined;}
+  for(const k of ['map','normalMap'])if(o.material[k])o.material[k].anisotropy=4;}});}
+async function loadAvatar(gl,n){
+  for(const u of AV_URLS(n)){try{const g=await gl.loadAsync(u);prepAvatar(g);ASSETS.av[n]=g;return g;}catch(e){console.warn('avatar load failed',u,e);}}
+  throw new Error('Could not load character '+n);
+}
 async function loadAssets(){
-  $('loadTxt').textContent='Downloading the talent (≈5 MB)…';
-  const gl=new GLTFLoader(manager);
+  $('loadTxt').textContent='Casting the board (≈4 MB)…';
+  ASSETS.av={};
+  const gl=new GLTFLoader(manager);gl.setMeshoptDecoder(MeshoptDecoder);
   const hdr=new RGBELoader(manager).loadAsync(HDRI_URL).then(t=>{t.mapping=THREE.EquirectangularReflectionMapping;scene.environment=pmrem.fromEquirectangular(t).texture;t.dispose();}).catch(e=>console.warn('HDRI failed, using studio fallback',e));
-  const [rpm,xbot]=await Promise.all([gl.loadAsync(ASSET_BASE+'readyplayer.me.glb'),gl.loadAsync(ASSET_BASE+'Xbot.glb')]);
-  ASSETS.rpm=rpm;ASSETS.xbot=xbot;
-  // shared special materials
-  let eyeSrc=null;rpm.scene.traverse(o=>{if(o.isMesh&&/EyeLeft/.test(o.name))eyeSrc=o.material;});
-  eyeGlowMat=eyeSrc.clone();eyeGlowMat.color=new THREE.Color('#ffb0b0');eyeGlowMat.emissive=new THREE.Color('#ff1010');eyeGlowMat.emissiveIntensity=2.2;eyeGlowMat.emissiveMap=eyeSrc.map;
+  const [xbot]=await Promise.all([gl.loadAsync(ASSET_BASE+'Xbot.glb'),...AV_FRONT.map(n=>loadAvatar(gl,n))]);
+  ASSETS.xbot=xbot;
   porcelain=new THREE.MeshPhysicalMaterial({color:'#ece6df',roughness:.32,clearcoat:1,clearcoatRoughness:.15,sheen:.3});
   porcelainJoint=new THREE.MeshPhysicalMaterial({color:'#1e1d22',roughness:.4,metalness:.6});
   await hdr;
@@ -1245,8 +1271,11 @@ async function loadAssets(){
   drawPodium();drawMarquee();drawWall();
   $('loadTxt').textContent='Ready. The team is in position.';$('loadBar').firstChild.style.width='100%';
   $('goBtn').disabled=false;$('goBtn').innerHTML='🔔 RING THE BELL &amp; GO PUBLIC';
+  // rest of the cast streams in the background
+  const bg=new GLTFLoader();bg.setMeshoptDecoder(MeshoptDecoder);
+  for(const n of AV_ALL.slice(AV_FRONT.length)){try{await loadAvatar(bg,n);}catch(e){}}
 }
-loadAssets().catch(e=>{window.__showErr('Could not download the 3D characters from cdn.jsdelivr.net.\nCheck your internet connection or ad-blocker.\n\n'+(e&&e.message||e));});
+loadAssets().catch(e=>{window.__showErr('Could not download the 3D characters.\nCheck your internet connection or ad-blocker.\n\n'+(e&&e.message||e));});
 
 // ---------- main loop ----------
 const clock=new THREE.Clock();let T=0,fpsAcc=0,fpsN=0,lowFpsT=0;
@@ -1264,7 +1293,7 @@ function frame(){
 function step(dt){
   if(state==='trading')sim(dt);else if(state==='closed'||state==='over')playerP*=Math.exp(-dt);
   if(ctx.stare>0)ctx.stare-=dt;
-  ctx.halted=halted;ctx.creepIndex=creepIndex;ctx.creepMix=creepMix;
+  ctx.halted=halted;ctx.creepIndex=creepIndex;ctx.creepMix=creepMix;ctx.prog=1-Math.exp(-(totalClaps/1400+gameT/600+creepIndex/350));
   {const tgt=(halted||ctx.stare>0)?0:clamp(Math.log(1+playerP*1.5+autoP*.6)/Math.log(1+45),0,1);ctx.energy+=(tgt-ctx.energy)*Math.min(1,dt*(tgt>ctx.energy?4:1.3));}
   const idleNow=state==='trading'&&!halted&&creepIndex>=8&&(performance.now()/1000-lastClap)>6;
   if(idleNow&&!ctx.idle){idleCount++;drawSub('WHY DID YOU STOP CLAPPING?');playWhisper(2.6);}
@@ -1277,8 +1306,8 @@ function step(dt){
   const trading=state==='trading'&&!halted,hires=chars.filter(c=>c.tier>=0&&!c.dying&&c.spawn>=1&&(!c.walkIn||c.walkT>=1));
   if(echoArmed&&state==='trading'&&creepIndex>=6&&performance.now()/1000-lastClap>1.1){echoArmed=false;if(Math.random()<.65)playEcho();}
   // #1 everyone slowly becomes the CEO
-  if(trading&&creepIndex>=30&&gameT>nextConvert){nextConvert=gameT+rand(12,24);const pool=hires.filter(c=>c.kind!=='xbot'&&!c.becameCEO);
-    if(pool.length&&pick(pool).becomeCEO()){flash(.06);if(Math.random()<.5)xpost(pick(CREEP_HANDLES)[0],'🪞',pick(['is it just me or are they all starting to look like the CEO','another one has his face now','count the moustaches. it was 2 an hour ago.','they\'re wearing his suit. they\'re wearing his face.']),'creep');}}
+  if(trading&&creepIndex>=30&&gameT>nextConvert){nextConvert=gameT+rand(12,24);const pool=hires.filter(c=>c.kind!=='xbot'&&!c.becameCEO&&c.o.avatar!==AV_FRONT[2]);
+    if(pool.length&&convertToCEO(pick(pool))){flash(.06);if(Math.random()<.5)xpost(pick(CREEP_HANDLES)[0],'🪞',pick(['is it just me or are they all starting to look like the CEO','another one has his face now','count the moustaches. it was 2 an hour ago.','they\'re wearing his suit. they\'re wearing his face.']),'creep');}}
   // #5 slow 180° head turn
   if(trading&&creepIndex>=15&&gameT>nextExorcist){nextExorcist=gameT+rand(18,32);const pool=hires.filter(c=>c.exorcist<=0);if(pool.length){const c=pick(pool);c.exDur=rand(3.5,5);c.exorcist=c.exDur;c.exDir=pick([-1,1]);playCreak(c.exDur*.75);}}
   // #17 cursor stalker
@@ -1309,7 +1338,7 @@ function step(dt){
   if(ctx.closeup){ctx.closeup.t-=dt;const p=ctx.closeup.p;
     if(ctx.closeup.t<=0||p.dead||p.dying){ctx.closeup=null;camera.position.copy(camBase);curLook.copy(camLook);}
     else{const hp=p.rig.Head.getWorldPosition(_t2);const fw=_fw.set(0,0,1).applyAxisAngle(_up,p.g.rotation.y);
-      camera.position.copy(hp).addScaledVector(fw,.85).add(_t1.set(rand(-1,1)*.004,.04+rand(-1,1)*.004,0));camera.lookAt(hp.x,hp.y+.02,hp.z);camera.updateMatrixWorld();}}
+      camera.position.copy(hp).addScaledVector(fw,.8).add(_t1.set(rand(-1,1)*.004,.1+rand(-1,1)*.004,0));camera.lookAt(hp.x,hp.y+.085,hp.z);camera.updateMatrixWorld();}}
   if(window.__camOverride){camera.position.copy(window.__camOverride.p);curLook.copy(window.__camOverride.l);camera.lookAt(curLook);camera.updateMatrixWorld();}
   camBase.set(Math.sin(T*.11)*.3+Math.sin(T*.53)*.03,2.12+rows*.2+Math.sin(T*.37)*.025,7.4+rows*.85);
   camLook.set(Math.sin(T*.07)*.12,1.74+rows*.16,0);
