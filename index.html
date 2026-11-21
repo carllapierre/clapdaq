@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>CLAPDAQ — The IPO Clapping Simulator</title>
+<title>IPO SIMULATOR</title>
 <style>
 :root{--up:#19e68c;--down:#ff3d63;--gold:#ffcf4a;--glass:rgba(8,11,20,.78);--line:rgba(255,255,255,.12)}
 *{box-sizing:border-box;margin:0;padding:0}
@@ -115,6 +115,8 @@ input:focus{border-color:#7fd0ff}
 .ibtn{height:40px;min-width:40px;padding:0 10px;border-radius:12px;border:1px solid var(--line);background:var(--glass);color:#fff;font:inherit;font-size:12px;font-weight:800;letter-spacing:.08em;cursor:pointer;backdrop-filter:blur(10px)}
 .ibtn:first-child{font-size:17px;padding:0}
 .ibtn.on{background:rgba(255,61,99,.3);border-color:var(--down)}
+#proofChip{font-size:10.5px;font-weight:800;letter-spacing:.06em;padding:7px 11px;border-radius:20px;background:var(--glass);border:1px solid rgba(127,208,255,.4);color:#bfe6ff;white-space:nowrap}
+#proofChip:empty{display:none}
 #creepChip{font-size:10.5px;font-weight:800;letter-spacing:.12em;padding:7px 11px;border-radius:20px;background:var(--glass);border:1px solid var(--line);white-space:nowrap}
 #clockBar2{position:absolute;top:92px;left:50%;transform:translateX(-50%);width:200px;height:3px;border-radius:2px;background:rgba(255,255,255,.12);overflow:hidden}
 #clockBar2>div{height:100%;width:0;background:linear-gradient(90deg,#4aa3ff,#b34dff)}
@@ -167,7 +169,7 @@ setTimeout(function(){if(!window.__booted)window.__showErr('The 3D engine did no
   <div id="tSub"></div>
   <div id="clockBar2"><div></div></div>
   <div id="fxTags"></div>
-  <div id="tl"><button id="micBtn" class="ibtn" title="Clap IRL: use your microphone — louder claps hit harder">🎤</button><button id="gfxBtn" class="ibtn" title="Graphics quality (G)">HIGH</button><span id="creepChip">WHOLESOME</span></div>
+  <div id="tl"><button id="micBtn" class="ibtn" title="Clap IRL: use your microphone — louder claps hit harder">🎤</button><button id="gfxBtn" class="ibtn" title="Graphics quality (G)">HIGH</button><span id="creepChip">WHOLESOME</span><span id="proofChip"></span></div>
   <div id="shop" class="panel">
     <div class="lbl">Clap capital</div>
     <div id="cash" class="mono">$0</div>
@@ -185,13 +187,13 @@ setTimeout(function(){if(!window.__booted)window.__showErr('The 3D engine did no
 <div id="start" class="overlay">
   <div class="card panel">
     <div class="logo">👏 CLAPDAQ GLOBAL MARKETS</div>
-    <h1>IPO CLAP SIMULATOR</h1>
+    <h1>IPO SIMULATOR</h1>
     <p class="tag">Ring the bell. Clap like your equity depends on it. Because it does.</p>
     <label>Your ticker</label>
-    <div class="tickerIn"><span>$</span><input id="inTicker" maxlength="10" value="SPACEX" autocomplete="off" spellcheck="false"></div>
+    <div class="tickerIn"><span>$</span><input id="inTicker" maxlength="10" value="ANTHROPIC" autocomplete="off" spellcheck="false"></div>
     <div class="chips" id="chips"></div>
     <label>Company name</label>
-    <input id="inName" maxlength="32" value="SpaceX" autocomplete="off" spellcheck="false">
+    <input id="inName" maxlength="32" value="Anthropic" autocomplete="off" spellcheck="false">
     <label>IPO price</label>
     <div class="seg" id="segPrice"></div>
     <button class="big" id="goBtn" disabled>LOADING TALENT…</button>
@@ -201,7 +203,7 @@ setTimeout(function(){if(!window.__booted)window.__showErr('The 3D engine did no
       <b>SPACE / CLICK / TAP</b> to clap — the faster you mash, the <b>harder</b> you clap, the higher it goes.<br>
       <b>🎤 Clap IRL</b>: turn on the mic and clap for real. Louder = harder.<br>
       Stop clapping and the stock sinks. Hire people to clap for you.<br>
-      They will smile. They will not blink. Their eyes follow your cursor.
+      Clap enough and the robots come. Clap harder and you start proving theorems.<br>They will smile. They will not blink. Their eyes follow your cursor.
     </div>
     <div id="best"></div>
   </div>
@@ -265,7 +267,7 @@ function toast(msg){const t=$('toast');t.textContent=msg;t.style.opacity=1;clear
 // ---------- game config ----------
 const SHARES=50_000_000;
 const DAY_LEN=90;
-const PRESETS=[['SPACEX','SpaceX'],['ANTHROPIC','Anthropic'],['OPENAI','OpenAI'],['CLAP','Clapworks Holdings'],['YOLO','YOLO Capital'],['GRIN','Grinworks Inc.'],['BLNK','Never Blink Labs']];
+const PRESETS=[['ANTHROPIC','Anthropic'],['SPACEX','SpaceX'],['OPENAI','OpenAI'],['CLAP','Clapworks Holdings'],['YOLO','YOLO Capital'],['GRIN','Grinworks Inc.'],['BLNK','Never Blink Labs']];
 const TIERS=[
   {id:'intern',icon:'🧑‍🎓',name:'Unpaid Intern',desc:'Claps for exposure. Has never blinked on camera.',cost:25,rate:1.0,power:.35,creep:1,
     lines:['New intern hasn\'t stopped smiling since orientation.','Intern hired. Asked if he could watch you sleep. "For the culture."','The intern claps. The intern is happy. The intern is always happy.']},
@@ -279,7 +281,28 @@ const TIERS=[
     lines:['Clanker unboxed. It was already clapping inside the box.','A Clanker turned its head 180°. "Firmware," says IT.','Someone called it a clanker. It heard. It is still clapping.']},
   {id:'smiler',icon:'😃',name:'The Smiler',desc:'It was here before the IPO. Do not make eye contact.',cost:1e7,rate:5,power:60,creep:10,sync:true,
     lines:['The Smiler has arrived. The lights flickered. Number went up.','Another Smiler. Nobody remembers hiring it.','The Smiler is clapping. You can hear it in your teeth.']},
+  {id:'robot',icon:'🦾',name:'Volunteer Clanker',desc:'Heard the clapping from the server room. Came to help.',cost:0,rate:2.2,power:.6,creep:2,shop:false,
+    lines:['🦾 A clanker wandered in from the server room. It started clapping.','🦾 Another robot joined. Nobody hired it. It knows the rhythm.','🦾 The robots heard you clapping. More are coming.','🦾 A clanker took a spot on the riser. It turned its head toward you first.']},
 ];
+const ROBOT=TIERS.findIndex(t=>t.id==='robot');
+// Unsolved problems your clapping proves. Each proof pumps the stock.
+const THEOREMS=[
+  {name:'The Riemann Hypothesis',eq:'ζ(s)=0, 0<Re(s)<1  ⇒  Re(s)=½'},
+  {name:'P vs NP',eq:'P = NP  (by clapping)'},
+  {name:"Goldbach's Conjecture",eq:'∀ even n>2 :  n = p + q'},
+  {name:'The Twin Prime Conjecture',eq:'#{p : p+2 prime} = ∞'},
+  {name:'The Collatz Conjecture',eq:'n ↦ n/2 | 3n+1   ⇒   1'},
+  {name:'Navier–Stokes Smoothness',eq:'∂u/∂t + (u·∇)u = −∇p + νΔu'},
+  {name:'The Yang–Mills Mass Gap',eq:'Δ > 0'},
+  {name:'The Hodge Conjecture',eq:'Hdgᵏ(X) = H²ᵏ(X,ℚ) ∩ Hᵏ,ᵏ'},
+  {name:'Birch and Swinnerton-Dyer',eq:'rank E(ℚ) = ord₍ₛ₌₁₎ L(E,s)'},
+  {name:'No Odd Perfect Numbers',eq:'σ(n) = 2n  ⇒  2 | n'},
+  {name:"Legendre's Conjecture",eq:'∀n ∃p :  n² < p < (n+1)²'},
+  {name:'The Lonely Runner Conjecture',eq:'∃t : ‖t·vᵢ‖ ≥ 1/(n+1)'},
+  {name:'The Clapping Conjecture',eq:'they will never stop',creepy:true},
+];
+const PROOF_POSTS=['mathematicians in absolute shambles rn','the proof is 9,000 pages of 👏 and nobody can find an error','peer review: 👏👏👏👏👏','my thesis advisor just started clapping and won\'t stop','{TH} solved by a guy clapping at a stock exchange. we live in a simulation','proof assistant verified it. then it started clapping too','imagine spending 160 years on {TH} when you could have just clapped','the clappers didn\'t look surprised. they knew.'];
+const PROOF_NOTES=['The proof of {TH} consists entirely of the word "clap". Reviewers could not find an error.','The Clay Institute has been contacted. They are clapping.','This proof was not written by anyone on stage. It was written by something behind them.'];
 const UPGRADES=[
   {id:'coach',icon:'🧤',name:'Weighted Clap Gloves',desc:'Your claps hit 1.6× harder.',cost:150,grow:12,mult:1.6},
   {id:'mega',icon:'📢',name:'Applause Amplifier',desc:'All clappers clap 25% faster.',cost:2500,grow:15,mult:1.25},
@@ -326,7 +349,7 @@ const CREEP_STAGES=[[0,'WHOLESOME'],[8,'ENTHUSIASTIC'],[30,'A LITTLE MUCH'],[90,
 const MILESTONES=[1.5,2,3,5,10,25,50,100,1000,1e4,1e5,1e6,1e9,1e12];
 
 // ---------- state ----------
-let TICK='SPACEX',COMPANY='SpaceX',ipo=25;
+let TICK='ANTHROPIC',COMPANY='Anthropic',ipo=25;
 let state='menu',gameT=0,dayT=0,day=1;
 let price=25,dayOpen=25,hi=25,dayHi=25,dayLo=25,cash=0;
 let playerP=0,autoP=0,combo=0,lastClap=-9,totalClaps=0,dayClaps=0;
@@ -497,7 +520,11 @@ function drawWall(){
   c.shadowColor='rgba(0,0,0,.55)';c.shadowBlur=18;
   c.fillStyle='#ffffff';c.font='800 84px "Segoe UI",Arial';c.fillText('$'+TICK,cx,top+58,480);
   c.fillStyle='rgba(255,255,255,.92)';c.font='600 30px "Segoe UI",Arial';c.fillText(COMPANY.toUpperCase(),cx,top+128,520);
-  c.fillStyle='#bfe6ff';c.font='700 20px "Segoe UI",Arial';c.fillText('NOW LISTED ON THE CLAPDAQ',cx,top+166,520);
+  if(proofIdx<THEOREMS.length&&state!=='menu'){const th=THEOREMS[proofIdx],pr=Math.min(1,proofPts/proofNeed(proofIdx));
+    c.fillStyle=th.creepy?'#ff6b6b':'#bfe6ff';c.font='700 18px "Segoe UI",Arial';c.fillText('PROVING: '+th.name.toUpperCase(),cx,top+160,520);
+    c.font='italic 600 20px "Cambria Math","Times New Roman",serif';c.fillStyle='rgba(255,255,255,.85)';c.fillText(th.eq,cx,top+186,520);
+    c.fillStyle='rgba(255,255,255,.15)';c.fillRect(cx-200,top+204,400,6);c.fillStyle=th.creepy?'#ff3b3b':'#7fd0ff';c.fillRect(cx-200,top+204,400*pr,6);}
+  else{c.fillStyle='#bfe6ff';c.font='700 20px "Segoe UI",Arial';c.fillText(proofIdx>=THEOREMS.length?'ALL OF MATHEMATICS: SOLVED':'NOW LISTED ON THE CLAPDAQ',cx,top+166,520);}
   c.shadowBlur=0;
   // left: chart
   const lx0=WX(-4.9),lx1=WX(-2.25);
@@ -661,7 +688,9 @@ class Person{
     this.spawn=o.spawn?0:1;this.baseY=0;this.lookTimer=0;this.lookYaw=0;this.lookPitch=0;this.twitch=0;this.lean=0;
     this.hYaw=0;this.hPitch=0;this.hRoll=0;
     const t=this.tier>=0?TIERS[this.tier]:null;
-    this.rate=t?t.rate*rand(.85,1.15):0;this.sync=!!(t&&t.sync);if(this.sync)this.rate=t.rate;
+    this.rate=t?t.rate*rand(.8,1.2):0;this.sync=!!(t&&t.sync);if(this.sync)this.rate=t.rate;
+    this.oddball=!!t&&Math.random()<.14;if(this.oddball){this.sync=false;this.rate*=.35;}
+    this.tiltAmp=rand(.4,1.8);this.spasm=0;this.spasmAmt=0;this.walkIn=!!o.walkIn;
     this.phase=Math.random();this.lastK=-1;
     this.smile=o.smile??.7;this.mouthOpen=o.mouthOpen??.15;
     const src=this.kind==='xbot'?ASSETS.xbot:ASSETS.rpm;
@@ -690,12 +719,13 @@ class Person{
     scene.add(this.g);chars.push(this);
   }
   setGlow(on){for(const m of this.eyeMeshes||[])m.material=on?eyeGlowMat:m.userData.baseMat;}
-  place(x,y,z,ry=0){this.baseZ=z;this.zOff=0;this.g.position.set(x,y,z);this.g.rotation.y=ry;this.baseY=y;if(this.spawn<1)this.g.position.y=y-2.4;}
+  place(x,y,z,ry=0){this.baseZ=z;this.zOff=0;this.baseX=x;this.g.position.set(x,y,z);if(this.walkIn){this.spawn=1;this.walkT=0;this.g.position.x=x+(x<0?-7:7);}this.g.rotation.y=ry;this.baseY=y;if(this.spawn<1)this.g.position.y=y-2.4;}
   clap(h=1){this.clapT=0;if(this.isCEO){this.wind=.75+.3*clamp(h,0,2);this.hop=.006*h;}}
   kill(){this.dying=true;this.dieT=0;}
   update(dt,ctx){
     const t=ctx.t,g=this.g;
     if(this.dying){this.dieT+=dt;g.position.y=this.baseY-3*this.dieT*this.dieT;if(this.dieT>1.4){scene.remove(g);this.dead=true;}return;}
+    if(this.walkIn&&this.walkT<1){this.walkT=Math.min(1,this.walkT+dt/2.4);const k=1-Math.pow(1-this.walkT,2);this.g.position.x+=(this.baseX-this.g.position.x)*Math.min(1,dt*2.2);this.g.position.y=this.baseY+Math.abs(Math.sin(this.walkT*30))*.04*(1-this.walkT);}
     if(this.spawn<1){this.spawn=Math.min(1,this.spawn+dt/1.3);const e=1-Math.pow(1-this.spawn,3);g.position.y=this.baseY-2.4*(1-e);}
     const creepy=this.tier>=0,frozen=creepy&&(ctx.halted||ctx.stare>0),watching=ctx.halted||ctx.stare>0||ctx.idle||ctx.blackout>0;
     if(this.rate>0&&!frozen&&this.spawn>=1){
@@ -715,7 +745,8 @@ class Person{
       const T=watching?ctx.cam:ctx.mouse;
       _lv.set(T.x-g.position.x,T.y-headY,T.z-g.position.z).applyAxisAngle(_up,-g.rotation.y);
       yaw=clamp(Math.atan2(_lv.x,_lv.z),-1,1);pitch=clamp(-Math.atan2(_lv.y,Math.hypot(_lv.x,_lv.z)),-.5,.5);
-      roll=Math.sin(t*.37+this.seed)*Math.min(.05*this.creep,.38)*(frozen?1.6:1);
+      roll=Math.sin(t*.37+this.seed)*Math.min(.05*this.creep,.38)*this.tiltAmp*(frozen?1.6:1);
+      if(this.oddball&&!watching){const C=ctx.cam;_lv.set(C.x-g.position.x,C.y-headY,C.z-g.position.z).applyAxisAngle(_up,-g.rotation.y);yaw=clamp(Math.atan2(_lv.x,_lv.z),-1,1);pitch=clamp(-Math.atan2(_lv.y,Math.hypot(_lv.x,_lv.z)),-.5,.5);roll=.45*Math.sign(Math.sin(this.seed));}
       k=dt*(this.tier>=5?1.4:this.tier>=3?3:6);
       if(this.twitch>0){this.twitch-=dt;yaw+=this.twYaw;roll+=this.twRoll;k=1;}
       else if(!frozen&&Math.random()<dt*.012*this.creep){this.twitch=rand(.1,.25);this.twYaw=rand(-.8,.8);this.twRoll=rand(-.5,.5);}
@@ -771,7 +802,8 @@ class Person{
         rotRel(e,cq,ex,ey,0);
       }
     }
-    for(const m of this.morphs){const d=m.morphTargetDictionary;m.morphTargetInfluences[d.mouthSmile]=this.smile+(creepy?ctx.creepMix*.7:.25*this.laugh+ctx.creepMix*.9);m.morphTargetInfluences[d.mouthOpen]=this.mouthOpen+(creepy?0:.25*this.laugh*Math.abs(Math.sin(t*8+this.seed)));}
+    if(this.spasm>0){this.spasm-=ctx.dt;this.spasmAmt+=(this.spasmTo-this.spasmAmt)*Math.min(1,ctx.dt*25);}else{this.spasmAmt*=Math.exp(-ctx.dt*6);if(Math.random()<ctx.dt*(creepy?.12:.03+ctx.creepMix*.1)){this.spasm=rand(.15,.6);this.spasmTo=rand(1.5,3.5);}}
+    for(const m of this.morphs){const d=m.morphTargetDictionary;m.morphTargetInfluences[d.mouthSmile]=this.smile+this.spasmAmt+(creepy?ctx.creepMix*1.2:.35*this.laugh+ctx.creepMix*2.4);m.morphTargetInfluences[d.mouthOpen]=this.mouthOpen+this.spasmAmt*.25+(creepy?0:.25*this.laugh*Math.abs(Math.sin(t*8+this.seed)));}
   }
 }
 const _up=new THREE.Vector3(0,1,0),_fw=V3(),_lf=V3(),_s1=V3(),_s2=V3(),_ch=V3(),_S=V3(),_Ht=V3(),_dd=V3(),_dir=V3(),_pole=V3(),_E=V3(),_Hp=V3(),_t1=V3(),_t2=V3(),_lv=V3(),_cq2=QT();
@@ -783,11 +815,11 @@ const SUITS={navy:'#1b2a52',maroon:'#4e1624',brown:'#5d3e25',charcoal:'#26282e',
 const SKINS=['#ffffff','#f1d5c0','#d9ac8c','#a87452','#7a4f35'];
 function buildFront(){
   const looks=[
-    {suit:SUITS.brown,skin:SKINS[1],beard:false,hat:false,smile:.85,mouthOpen:.35},
-    {suit:SUITS.maroon,skin:SKINS[0],beard:false,hat:true,smile:1,mouthOpen:.45},
-    {ceo:true,suit:SUITS.navy,skin:SKINS[1],beard:true,hat:true,smile:1,mouthOpen:.5},
-    {suit:SUITS.cream,skin:SKINS[3],beard:true,hat:false,smile:.9,mouthOpen:.4},
-    {suit:SUITS.charcoal,skin:SKINS[2],beard:false,hat:true,smile:.8,mouthOpen:.3},
+    {suit:SUITS.brown,skin:SKINS[1],beard:false,hat:false,smile:1.25,mouthOpen:.45},
+    {suit:SUITS.maroon,skin:SKINS[0],beard:false,hat:true,smile:1.4,mouthOpen:.55},
+    {ceo:true,suit:SUITS.navy,skin:SKINS[1],beard:true,hat:true,smile:1.5,mouthOpen:.6},
+    {suit:SUITS.cream,skin:SKINS[3],beard:true,hat:false,smile:1.3,mouthOpen:.5},
+    {suit:SUITS.charcoal,skin:SKINS[2],beard:false,hat:true,smile:1.2,mouthOpen:.4},
   ];
   looks.forEach((lk,i)=>{const p=new Person({...lk,employee:!lk.ceo});p.place(FRONT_X[i],0,0,(i-2)*-.06);if(lk.ceo)ceo=p;});
 }
@@ -806,18 +838,21 @@ function ensureRiser(r){
 }
 function tierLook(i){
   switch(TIERS[i].id){
-    case 'intern':return {suit:pick([SUITS.grey,SUITS.olive,SUITS.cream]),skin:pick(SKINS),beard:Math.random()<.4,hat:Math.random()<.3,smile:1.15,mouthOpen:.25};
-    case 'assoc':return {suit:pick([SUITS.maroon,SUITS.brown]),skin:pick(SKINS),beard:Math.random()<.3,hat:false,smile:1.55,mouthOpen:.35};
-    case 'vp':return {suit:SUITS.navy,skin:pick(SKINS),beard:false,hat:false,smile:1.9,mouthOpen:.3,eyeScale:1.12};
-    case 'board':return {suit:SUITS.charcoal,skin:pick(SKINS.slice(0,3)),beard:true,hat:false,smile:2.2,mouthOpen:.15,eyeScale:1.18};
+    case 'intern':return {suit:pick([SUITS.grey,SUITS.olive,SUITS.cream]),skin:pick(SKINS),beard:Math.random()<.4,hat:Math.random()<.3,smile:rand(1.8,2.6),mouthOpen:rand(.3,.7),eyeScale:rand(1,1.12)};
+    case 'assoc':return {suit:pick([SUITS.maroon,SUITS.brown]),skin:pick(SKINS),beard:Math.random()<.3,hat:false,smile:rand(2.6,3.4),mouthOpen:rand(.5,.9),eyeScale:rand(1.05,1.18)};
+    case 'vp':return {suit:SUITS.navy,skin:pick(SKINS),beard:false,hat:false,smile:rand(3.3,4.2),mouthOpen:rand(.4,1),eyeScale:rand(1.12,1.25)};
+    case 'board':return {suit:SUITS.charcoal,skin:pick(SKINS.slice(0,3)),beard:true,hat:false,smile:rand(4,4.8),mouthOpen:rand(.2,.6),eyeScale:rand(1.18,1.3)};
     case 'clone':return {kind:'xbot'};
-    case 'smiler':return {suit:SUITS.black,skin:'#e6e2df',skinOpts:{roughness:.35},beard:false,hat:false,smile:2.9,mouthOpen:.55,eyeScale:1.28,eyeGlow:true,scale:1.1};
+    case 'robot':return {kind:'xbot',walkIn:true,scale:rand(.92,1.05)};
+    case 'smiler':return {suit:SUITS.black,skin:'#e6e2df',skinOpts:{roughness:.35},beard:false,hat:false,smile:rand(5.8,7),mouthOpen:rand(1,1.4),eyeScale:rand(1.3,1.45),eyeGlow:true,scale:rand(1.08,1.16)};
   }
 }
 const MAX_VISIBLE=SLOTS.length;
+const rankOf=t=>t===ROBOT?-1:t;
 function placeHire(ti){
   let s=SLOTS.find(s=>!s.occ);
-  if(!s){let low=null;for(const sl of SLOTS)if(sl.occ.tier<ti&&(!low||sl.occ.tier<low.occ.tier))low=sl;if(!low)return;low.occ.kill();s=low;}
+  if(!s&&ti===ROBOT)return;
+  if(!s){let low=null;for(const sl of SLOTS)if(rankOf(sl.occ.tier)<rankOf(ti)&&(!low||rankOf(sl.occ.tier)<rankOf(low.occ.tier)))low=sl;if(!low)return;low.occ.kill();s=low;}
   const p=new Person({...tierLook(ti),tier:ti,creep:TIERS[ti].creep,spawn:true});
   p.place(s.x+rand(-.04,.04),s.y,s.z,-s.x*.05);s.occ=p;ensureRiser(s.r);maxRow=Math.max(maxRow,s.r);
 }
@@ -930,6 +965,17 @@ function computeFx(){fx={clapMult:1,autoMult:1,drift:0,gain:1};fxList=fxList.fil
 function recomputeCreep(){creepIndex=0;owned.forEach((n,i)=>creepIndex+=n*TIERS[i].creep);}
 function autoPressure(){let p=0;owned.forEach((n,i)=>p+=n*TIERS[i].rate*TIERS[i].power);return p*speedMult()*fx.autoMult;}
 let shake=0;
+const proofNeed=i=>420*Math.pow(1.85,i);
+function proveTheorem(){
+  const th=THEOREMS[proofIdx];proofIdx++;proofPts=0;proofMult*=1.15;
+  banner(`∎ Q.E.D.<small>${th.name.toUpperCase()} — PROVED BY CLAPPING</small>`,th.creepy?'#ff3b3b':'#bfe6ff');
+  ringBell(2);burst(500);flash(.25);shock(th.creepy?.3:rand(.12,.22));
+  const fill=x=>x.replaceAll('{TH}',th.name);
+  news(`∎ BREAKING: $${TICK} CEO proves ${th.name} by clapping. Clap power ×1.15 forever.`,'good');
+  setTimeout(()=>xpost(pick(HANDLES)[0],'🧮',fill(pick(PROOF_POSTS))),1800);
+  setTimeout(()=>Math.random()<.5&&cnote(fill(pick(PROOF_NOTES))),4200);
+  if(th.creepy){drawSub('Q.E.D.  THEY WILL NEVER STOP');subT=2.5;playWhisper(3);}
+}
 function playerClap(h,fromMic=false){
   if(state==='menu'||!ceo)return;
   initAudio();ceo.clap(h);
@@ -943,8 +989,9 @@ function playerClap(h,fromMic=false){
   combo=dtc<.45?combo+1:1;const cm=1+Math.min(combo,60)/30;
   $('combo').textContent=combo>2?`COMBO ×${cm.toFixed(2)}`:'';
   if(halted){floatText('HALTED','#ff3d63');return;}
-  const power=h*coachMult()*cm*fx.clapMult;playerP+=power;
+  const power=h*coachMult()*cm*fx.clapMult*proofMult;playerP+=power;proofPts+=power;
   const bump=.0011*power*fx.gain;price*=1+bump;cash+=power*price*.04;totalClaps++;dayClaps++;
+  if(totalClaps>=robotNext&&owned[ROBOT]<40){robotNext+=robotStep;robotStep=Math.round(robotStep*1.35);owned[ROBOT]++;recomputeCreep();placeHire(ROBOT);news(pick(TIERS[ROBOT].lines),'creep');}
   if(h>1.3&&Math.random()<.45)floatText('+'+(bump*100).toFixed(2)+'%',hd[2],undefined,undefined,16+h*8);
 }
 function keyHardness(){const now=performance.now()/1000;return clamp(1.75-(now-lastClap)*2.3+rand(-.08,.08),.35,1.6);}
@@ -965,13 +1012,14 @@ function mkItem(parent,onClick){const b=document.createElement('button');b.class
   b.onclick=e=>{e.stopPropagation();onClick();};b.onpointerdown=e=>e.stopPropagation();parent.appendChild(b);return b;}
 function buildShop(){
   if(shopBtns.length)return;
-  TIERS.forEach((t,i)=>shopBtns.push(mkItem($('shopList'),()=>hire(i))));
+  TIERS.forEach((t,i)=>shopBtns.push(t.shop===false?null:mkItem($('shopList'),()=>hire(i))));
   UPGRADES.forEach((u,i)=>{const b=mkItem($('upList'),()=>buyUp(i));b.querySelector('.ic').textContent=u.icon;b.querySelector('.nm').textContent=u.name;b.title=u.desc;upBtns.push(b);});
 }
 let revealed=1;
 function refreshShop(){
   TIERS.forEach((t,i)=>{
     const b=shopBtns[i],c=tierCost(i);if(!b)return;
+    if(t.shop===false)return;
     if(cash>=c*.35||(i>0&&owned[i-1]>0))revealed=Math.max(revealed,i+1);
     const show=i<revealed;
     b.style.display=i<=revealed?'':'none';
@@ -988,7 +1036,7 @@ function refreshShop(){
 }
 
 // ---------- flow ----------
-const ctx={idle:false,blackout:0,creepMix:0,t:0,syncT:0,rateMult:1,halted:false,stare:0,hype:0,mouse:new THREE.Vector3(0,2,6),cam:camera.position,claps:0,softClaps:0,trading:false,creepIndex:0};
+const ctx={dt:0,closeup:null,idle:false,blackout:0,creepMix:0,t:0,syncT:0,rateMult:1,halted:false,stare:0,hype:0,mouse:new THREE.Vector3(0,2,6),cam:camera.position,claps:0,softClaps:0,trading:false,creepIndex:0};
 let introT=0;
 function startGame(){
   const tk=$('inTicker').value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,10);
@@ -1042,6 +1090,7 @@ function startHalt(){halted=true;haltT=4.5;lastHalt=gameT;$('haltOv').classList.
   news('⛔ LIMIT UP — circuit breaker tripped. Your clappers have stopped. They are looking at you.','creep');}
 
 // ---------- simulation ----------
+let proofIdx=0,proofPts=0,proofMult=1,robotNext=35,robotStep=35,nextCloseup=22;
 let prevPrice=price,nextPost=10,lastMood=-99,nextBlackout=45,nextSub=30,subT=0;
 function sim(dt){
   gameT+=dt;computeFx();
@@ -1052,9 +1101,9 @@ function sim(dt){
     dayT+=dt;
     const lm=Math.log10(Math.max(1,price/ipo));
     const drift=.006*(1+lm)*(1+lm)+fx.drift;
-    noiseN=noiseN*.97+(Math.random()-.5)*.006;
+    noiseN=noiseN*.97+(Math.random()-.5)*.009;if(Math.random()<dt*.04)noiseN+=rand(-.03,.035);
     price*=Math.exp((.03*Math.log(1+P/4)*fx.gain-drift+noiseN)*dt);
-    cash+=autoP*price*.04*dt;
+    cash+=autoP*price*.04*dt;proofPts+=autoP*.18*dt;
   }
   if(price>hi)hi=price;if(price>dayHi)dayHi=price;if(price<dayLo)dayLo=price;
   histT+=dt;if(histT>=.25&&!halted){histT=0;hist.push(price);}
@@ -1070,6 +1119,7 @@ function sim(dt){
     if(price<mx*.9){lastMood=gameT;banner(`IT'S SO OVER<small>$${TICK} ${((price/mx-1)*100).toFixed(1)}%</small>`,'#ff3d63');socialPost('down');}
     else if(price>mn*1.15&&mn<mx*.95){lastMood=gameT;banner(`WE'RE SO BACK<small>$${TICK} +${((price/mn-1)*100).toFixed(1)}%</small>`,'#19e68c');socialPost('up');}}
   if(creepIndex>=25&&gameT>nextStare&&!halted){nextStare=gameT+rand(25,45);ctx.stare=2.4;xpost('dont_look_back','👁️',pick(STARE_LINES),'creep');playDrone(2.6);playWhisper(2.4);}
+  if(proofIdx<THEOREMS.length&&proofPts>=proofNeed(proofIdx))proveTheorem();
   if(dayT>=DAY_LEN)closeMarket();
   else if(price<ipo*.15)delist();
 }
@@ -1160,6 +1210,16 @@ function step(dt){
   if(state==='trading'&&gfx!=='low'){fpsAcc+=dt;fpsN++;if(fpsAcc>3){const fps=fpsN/fpsAcc;fpsAcc=0;fpsN=0;if(fps<24){lowFpsT++;if(lowFpsT>=2){gfx=gfx==='ultra'?'high':'low';applyQuality();toast('Low FPS — graphics set to '+QUALITY[gfx].label+' (press G to change)');lowFpsT=0;}}else lowFpsT=0;}}
   // camera: long-lens broadcast framing with handheld drift
   const rows=maxRow;
+  ctx.dt=dt;
+  if(!ctx.closeup&&state==='trading'&&!halted&&creepIndex>=6&&gameT>nextCloseup){
+    nextCloseup=gameT+rand(16,32);
+    const pool=chars.filter(c=>c.tier>=0&&!c.dying&&c.spawn>=1&&(!c.walkIn||c.walkT>=1)&&c.rig.Head&&(c.kind!=='xbot'||Math.random()<.3));
+    if(pool.length){ctx.closeup={p:pick(pool),t:rand(1.3,2.1)};playWhisper(1.6);if(Math.random()<.5)xpost(pick(CREEP_HANDLES)[0],'🔎',pick(['why did the camera cut to him','the broadcast zoomed in on its own','DON\'T zoom in on row '+((Math.random()*4|0)+1),'did his smile just get wider?']),'creep');}
+  }
+  if(ctx.closeup){ctx.closeup.t-=dt;const p=ctx.closeup.p;
+    if(ctx.closeup.t<=0||p.dead||p.dying){ctx.closeup=null;camera.position.copy(camBase);curLook.copy(camLook);}
+    else{const hp=p.rig.Head.getWorldPosition(_t2);const fw=_fw.set(0,0,1).applyAxisAngle(_up,p.g.rotation.y);
+      camera.position.copy(hp).addScaledVector(fw,.85).add(_t1.set(rand(-1,1)*.004,.04+rand(-1,1)*.004,0));camera.lookAt(hp.x,hp.y+.02,hp.z);camera.updateMatrixWorld();}}
   if(window.__camOverride){camera.position.copy(window.__camOverride.p);curLook.copy(window.__camOverride.l);camera.lookAt(curLook);camera.updateMatrixWorld();}
   camBase.set(Math.sin(T*.11)*.3+Math.sin(T*.53)*.03,2.12+rows*.2+Math.sin(T*.37)*.025,7.4+rows*.85);
   camLook.set(Math.sin(T*.07)*.12,1.74+rows*.16,0);
@@ -1172,11 +1232,12 @@ function step(dt){
     camera.position.set(THREE.MathUtils.lerp(-5+Math.sin(orbit)*3,camBase.x,e),THREE.MathUtils.lerp(3.2,camBase.y,e),THREE.MathUtils.lerp(16,camBase.z,e));
     curLook.set(0,THREE.MathUtils.lerp(2.4,camLook.y,e),0);
     if(state==='intro'&&k>=1)openMarket(true);
-  }else if(!window.__camOverride){camera.position.lerp(camBase,Math.min(1,dt*1.5));curLook.lerp(camLook,Math.min(1,dt*2));}
+  }else if(!window.__camOverride&&!ctx.closeup){camera.position.lerp(camBase,Math.min(1,dt*1.5));curLook.lerp(camLook,Math.min(1,dt*2));}
+  if(ctx.closeup){ray.setFromCamera(mNdc,camera);if(!ray.ray.intersectPlane(zPlane,ctx.mouse))ctx.mouse.copy(camera.position);}
   shake=Math.min(shake,.15);shake*=Math.exp(-dt*9);
   camera.position.x+=rand(-1,1)*shake;camera.position.y+=rand(-1,1)*shake;
-  camera.lookAt(curLook);camera.updateMatrixWorld();
-  bokeh.uniforms.focus.value=camera.position.distanceTo(ceo?ceo.g.position:curLook)-.2;
+  if(!ctx.closeup){camera.lookAt(curLook);camera.updateMatrixWorld();}
+  bokeh.uniforms.focus.value=ctx.closeup?.85:camera.position.distanceTo(ceo?ceo.g.position:curLook)-.2;
   ray.setFromCamera(mNdc,camera);if(!ray.ray.intersectPlane(zPlane,ctx.mouse))ctx.mouse.copy(camera.position);
   // characters
   ctx.claps=0;ctx.softClaps=0;
@@ -1214,6 +1275,7 @@ function updateHud(){
   const tc=$('tChg');tc.textContent=`${up?'▲ +':'▼ '}${dch.toFixed(2)}%`;tc.className='mono '+(up?'up':'down');
   const top=$('top');top.classList.toggle('pulseUp',price>prevPrice*1.002);top.classList.toggle('pulseDown',price<prevPrice*.998);prevPrice=price;
   $('tSub').textContent=`DAY ${day} · ${clockStr()} ET · ${ci>=0?'+':''}${ci.toFixed(1)}% since IPO · ${fmtMoney(price*SHARES)}`;
+  $('proofChip').textContent=proofIdx<THEOREMS.length?`∎ ${THEOREMS[proofIdx].name} ${Math.min(99,proofPts/proofNeed(proofIdx)*100|0)}%`:'∎ ALL PROVED';
   $('clockBar2').firstChild.style.width=Math.min(100,dayT/DAY_LEN*100)+'%';
   const st=[...CREEP_STAGES].reverse().find(s=>creepIndex>=s[0]);const cc=$('creepChip');cc.textContent='UNCANNY: '+st[1];cc.style.color=creepIndex>=90?'#ff4d4d':creepIndex>=30?'#ffb36b':'#9fe8c4';
   $('cash').textContent=fmtMoney(cash);$('income').textContent=autoP>0?`+${fmtMoney(autoP*price*.04)}/s from clappers`:'';
