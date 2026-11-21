@@ -8,6 +8,7 @@
 :root{--up:#19e68c;--down:#ff3d63;--gold:#ffcf4a;--glass:rgba(8,11,20,.78);--line:rgba(255,255,255,.12)}
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{width:100%;height:100%;overflow:hidden;background:#000;color:#fff;font-family:Inter,"Segoe UI",system-ui,sans-serif;user-select:none;-webkit-user-select:none}
+*{-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;touch-action:manipulation}
 canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:crosshair}
 .mono{font-family:"JetBrains Mono","Cascadia Mono",Consolas,monospace}
 .panel{background:var(--glass);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--line);border-radius:14px;box-shadow:0 10px 40px rgba(0,0,0,.35)}
@@ -50,6 +51,7 @@ canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block;touch-actio
 .item .own{font-size:18px;font-weight:800;opacity:.85;flex:none}
 #offstage{font-size:11px;opacity:.6;margin-top:8px;font-style:italic}
 #bottom{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:16px}
+#clapBtn,#ringWrap{touch-action:none}
 #clapBtn{width:104px;height:104px;border-radius:50%;border:none;font-size:46px;cursor:pointer;background:radial-gradient(circle at 35% 30%,#fff0bd,#ffb52e 55%,#e0751b);box-shadow:0 0 0 6px rgba(255,255,255,.08),0 10px 40px rgba(255,170,40,.45);transition:transform .05s}
 #clapBtn.hit{transform:scale(.9)}
 #meter{width:260px;padding:11px 14px}
@@ -144,7 +146,38 @@ input:focus{border-color:#7fd0ff}
 @keyframes bannerPop{0%{opacity:0;transform:translate(-50%,-50%) scale(.6)}12%{opacity:1;transform:translate(-50%,-50%) scale(1.08)}20%{transform:translate(-50%,-50%) scale(1)}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-60%) scale(1)}}
 @keyframes floatUp{from{opacity:1;transform:translate(-50%,0) scale(1.2)}to{opacity:0;transform:translate(-50%,-90px) scale(.9)}}
 @media (max-width:1000px){#shop{width:250px}#left{width:200px}#feed{display:none}#meter{width:190px}}
-@media (max-width:720px){#left{display:none}#shop{top:auto;bottom:150px;max-height:40vh;width:230px}#tSub{display:none}#tPrice{font-size:24px}#tSym{font-size:18px}#banner{font-size:34px}}
+@media (max-width:720px){
+  #left,#tSub,#feed{display:none}
+  #top{top:calc(8px + env(safe-area-inset-top));padding:6px 14px;gap:10px;max-width:calc(100vw - 16px)}
+  #tSym{font-size:16px}#tPrice{font-size:22px}#tChg{font-size:13px}
+  #clockBar2{top:calc(52px + env(safe-area-inset-top));width:140px}
+  #tl{top:calc(62px + env(safe-area-inset-top));left:8px;right:8px;gap:6px;flex-wrap:wrap}
+  .ibtn{height:30px;min-width:30px;font-size:10px;border-radius:9px}.ibtn:first-child{font-size:14px}
+  #creepChip,#proofChip{font-size:9px;padding:5px 8px;letter-spacing:.05em}
+  #proofChip{max-width:52vw;overflow:hidden;text-overflow:ellipsis}
+  #fxTags{top:calc(98px + env(safe-area-inset-top));flex-wrap:wrap;justify-content:center;width:90vw}
+  #shop{top:auto;left:0;right:0;bottom:0;width:auto;max-height:none;border-radius:16px 16px 0 0;padding:8px 8px calc(8px + env(safe-area-inset-bottom));
+    display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;align-items:stretch;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
+  #shop>.lbl,#income,#offstage,#shop .sect{display:none}
+  #shopList,#upList{display:contents}
+  #cash{flex:none;align-self:center;font-size:17px;padding:0 6px;writing-mode:horizontal-tb}
+  #shop .item{flex:0 0 128px;margin-top:0;padding:6px 8px;gap:6px;scroll-snap-align:start}
+  #shop .item .ds{display:none}#shop .item .ic{font-size:19px;width:22px}#shop .item .nm{font-size:11.5px;line-height:1.15}
+  #shop .item .cs{font-size:11px}#shop .item .own{font-size:14px}
+  #ringWrap{bottom:calc(82px + env(safe-area-inset-bottom))}
+  #clapBtn{width:92px;height:92px;font-size:40px}
+  #ringWrap #hardLbl{font-size:13px}
+  #banner{font-size:28px;width:92vw;text-align:center}
+  #toast{max-width:90vw}
+  .card{padding:18px 18px;max-height:calc(100dvh - 16px)}
+  .logo{font-size:11px}
+  h1{font-size:30px}
+  .tag{font-size:13px;margin-bottom:8px}
+  .tickerIn,.tickerIn input{font-size:30px}
+  .big{font-size:17px;padding:14px;margin-top:14px}
+  .how{font-size:12px}
+  input{font-size:16px}
+}
 </style>
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"}}
@@ -178,7 +211,7 @@ setTimeout(function(){if(!window.__booted)window.__showErr('The 3D engine did no
     <div id="upList"></div>
     <div id="offstage"></div>
   </div>
-  <div id="ringWrap"><div id="ring"><button id="clapBtn" title="Clap (Space)">👏</button></div><div id="hardLbl">MASH SPACE</div><div id="combo"></div></div>
+  <div id="ringWrap"><div id="ring"><button id="clapBtn" title="Clap (Space)">👏</button></div><div id="hardLbl">MASH</div><div id="combo"></div></div>
   <div id="feed"></div>
 </div>
 <div id="banner"></div>
@@ -190,7 +223,7 @@ setTimeout(function(){if(!window.__booted)window.__showErr('The 3D engine did no
     <h1>IPO SIMULATOR</h1>
     <p class="tag">Ring the bell. Clap like your equity depends on it. Because it does.</p>
     <label>Your ticker</label>
-    <div class="tickerIn"><span>$</span><input id="inTicker" maxlength="10" value="ANTHROPIC" autocomplete="off" spellcheck="false"></div>
+    <div class="tickerIn"><span>$</span><input id="inTicker" maxlength="4" value="ANT" inputmode="text" autocapitalize="characters" autocomplete="off" spellcheck="false"></div>
     <div class="chips" id="chips"></div>
     <label>Company name</label>
     <input id="inName" maxlength="32" value="Anthropic" autocomplete="off" spellcheck="false">
@@ -269,7 +302,7 @@ function toast(msg){const t=$('toast');t.textContent=msg;t.style.opacity=1;clear
 // ---------- game config ----------
 const SHARES=50_000_000;
 const DAY_LEN=90;
-const PRESETS=[['ANTHROPIC','Anthropic'],['SPACEX','SpaceX'],['OPENAI','OpenAI'],['CLAP','Clapworks Holdings'],['YOLO','YOLO Capital'],['GRIN','Grinworks Inc.'],['BLNK','Never Blink Labs']];
+const PRESETS=[['ANT','Anthropic',83],['SPCX','SpaceX',135],['OAI','OpenAI'],['CLAP','Clapworks Holdings'],['YOLO','YOLO Capital'],['GRIN','Grinworks Inc.'],['BLNK','Never Blink Labs']];
 const TIERS=[
   {id:'intern',icon:'🧑‍🎓',name:'Unpaid Intern',desc:'Claps for exposure. Has never blinked on camera.',cost:25,rate:1.0,power:.35,creep:1,
     lines:['New intern hasn\'t stopped smiling since orientation.','Intern hired. Asked if he could watch you sleep. "For the culture."','The intern claps. The intern is happy. The intern is always happy.']},
@@ -332,10 +365,10 @@ const POSTS={
   up:['{T} to the moon 🚀🚀🚀 wen lambo','chat is this real? {T} up {C}% today','bro is LOCKED IN on that clap 🔒','+5000 aura for the CEO\'s clapping technique','number go up. that is the whole thesis','my model says buy because the guy is clapping really hard','not financial advice but clap harder','{T} holders rn: 🗿','we are so back','diamond hands, clapping hands 💎👏','the way he claps… generational aura','this is the most bullish clapping i\'ve ever seen'],
   down:['it\'s so over','bro is cooked 💀','bought {T} at the top. clapping my way back to breakeven','ratio + you didn\'t clap hard enough','mid clapping tbh. 3/10','who sold. show yourself','pov: you stopped clapping for 4 seconds','{T} down {C}%. skill issue'],
   creep:['why do all the clappers have the same face','zoom in on row 3. he\'s not clapping. he\'s looking at ME','livestream ended an hour ago. you can still hear clapping','the clankers are clapping in sync with my heartbeat','i paused the stream and they kept moving','does anyone else hear whispering under the applause','that\'s not a smile. that\'s just teeth','they turned to the camera at the same time. all of them.','counted the clappers twice. got different numbers.'],
-  SPACEX:['{T} pricing in Mars real estate 🔴','clapping so hard it reached orbit','bro clapped through max-Q','the clappers are rehearsing for the Mars colony welcome party','{T} is the first stock to clap its way to escape velocity'],
-  ANTHROPIC:['You\'re absolutely right! {T} is going up.','the clappers passed the alignment eval. that\'s the scary part','clapping in a helpful, harmless and honest way','asked an AI if i should buy {T}. it said "great question!"','context window: 200K claps'],
+  SPCX:['{T} pricing in Mars real estate 🔴','clapping so hard it reached orbit','bro clapped through max-Q','the clappers are rehearsing for the Mars colony welcome party','{T} is the first stock to clap its way to escape velocity'],
+  ANT:['You\'re absolutely right! {T} is going up.','the clappers passed the alignment eval. that\'s the scary part','clapping in a helpful, harmless and honest way','asked an AI if i should buy {T}. it said "great question!"','context window: 200K claps'],
   puglia:['CEO about to cash out and retire to Puglia. calling it now 🍋','IPO → lock-up ends → masseria in Puglia. the founder pipeline','he\'s clapping like a man who already put a deposit on a masseria in Puglia','new bio incoming: "ex-founder. olive oil. Puglia."','the "retiring to Puglia" → "back with a new AI startup" pipeline is 18 months','sold at the top, now making orecchiette in Puglia 🍝','CEO out-of-office: "in Puglia. do not contact. the clappers will handle it."','founder roadmap: IPO → Puglia → podcast → new startup','every founder says Puglia. none of them survive a week without Slack','he\'s going to buy a farm and make cheese. they always buy a farm and make cheese 🧀','CEO is 3 claps away from launching a podcast','next stop: silent retreat, then a Substack about the silent retreat'],
-  OPENAI:['feel the AGI 👏👏👏','AGI achieved internally (it\'s just clapping)','clapping scales with compute','{T} roadmap: clap → AGI → clap harder','the clappers are a reasoning model. they reasoned that clapping is good'],
+  OAI:['feel the AGI 👏👏👏','AGI achieved internally (it\'s just clapping)','clapping scales with compute','{T} roadmap: clap → AGI → clap harder','the clappers are a reasoning model. they reasoned that clapping is good'],
 };
 const NOTES=['The people behind the CEO are not blinking. They have not blinked since the IPO.','The applause in this video is synthetic. The clappers are not.','Clapping does not affect stock prices. (It does here.)','Several clappers appear in multiple rows at the same time.','There were 5 people on stage at the start of this video.'];
 const HANDLES=[['diamondhandz69','💎'],['quantbro','📊'],['bagholder_irl','🎒'],['vibes_capital','✨'],['lockedin_larry','🔒'],['auraaudit','🌀'],['ratio_king','👑'],['wenlambo','🏎️'],['fintwit_daily','📰'],['mid_takes','😐'],['gm_gn_wagmi','☀️'],['stonks_enjoyer','📈']];
@@ -356,7 +389,7 @@ const CREEP_STAGES=[[0,'WHOLESOME'],[8,'ENTHUSIASTIC'],[30,'A LITTLE MUCH'],[90,
 const MILESTONES=[1.5,2,3,5,10,25,50,100,1000,1e4,1e5,1e6,1e9,1e12];
 
 // ---------- state ----------
-let TICK='ANTHROPIC',COMPANY='Anthropic',ipo=25;
+let TICK='ANT',COMPANY='Anthropic',ipo=83;
 let state='menu',gameT=0,dayT=0,day=1;
 let price=25,dayOpen=25,hi=25,dayHi=25,dayLo=25,cash=0;
 let playerP=0,autoP=0,combo=0,lastClap=-9,totalClaps=0,dayClaps=0;
@@ -396,6 +429,10 @@ const pmrem=new THREE.PMREMGenerator(renderer);
 scene.environment=pmrem.fromScene(new RoomEnvironment(),.04).texture;
 scene.environmentIntensity=.35;
 const camera=new THREE.PerspectiveCamera(26,innerWidth/innerHeight,.1,120);
+const TOUCH=matchMedia('(pointer:coarse)').matches||'ontouchstart' in window;
+// portrait phones: widen the vertical FOV so the front row still fits across
+function fitFov(){const a=innerWidth/innerHeight;camera.fov=a>=1.3?26:Math.min(56,2*Math.atan(.24/a)*180/Math.PI);camera.aspect=a;camera.updateProjectionMatrix();}
+fitFov();
 camera.position.set(-4,5,24);
 
 // ---------- post-processing ----------
@@ -432,7 +469,7 @@ composer.addPass(grade);
 let composerOK=true;
 
 addEventListener('resize',()=>{
-  camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();
+  fitFov();
   renderer.setSize(innerWidth,innerHeight);composer.setSize(innerWidth,innerHeight);
 });
 
@@ -880,9 +917,9 @@ const AV_FRONT=['Business_Female_01','Business_Female_02','Business_Male_02','Fe
 const AV_ALL=[...AV_FRONT,'Business_Male_01','Business_Female_03','Business_Male_03','Business_Female_04','Male_Adult_03','Business_Male_06'];
 // parody CEOs for the famous tickers (caricatures built from stock avatars: hair, glasses, wardrobe)
 const CEO_LOOKS={
-  ANTHROPIC:{name:'Dario Amodei',avatar:'Business_Male_01',curls:'#1d1510',glasses:true,wardrobe:'dario'},
-  SPACEX:{name:'Elon Musk',avatar:'Business_Male_03',wardrobe:'elon',scale:1.05,bulk:1.07},
-  OPENAI:{name:'Sam Altman',avatar:'Business_Male_06',wardrobe:'sam',scale:.95},
+  ANT:{name:'Dario Amodei',avatar:'Business_Male_01',curls:'#1d1510',glasses:true,wardrobe:'dario'},
+  SPCX:{name:'Elon Musk',avatar:'Business_Male_03',wardrobe:'elon',scale:1.05,bulk:1.07},
+  OAI:{name:'Sam Altman',avatar:'Business_Male_06',wardrobe:'sam',scale:.95},
 };
 const DEFAULT_CEO={name:null,avatar:'Business_Male_02'};
 let ceoLook=DEFAULT_CEO;
@@ -1205,7 +1242,7 @@ function setCEO(look){
 let starting=false;
 async function startGame(){
   if(starting)return;
-  const tk=$('inTicker').value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,10);
+  const tk=$('inTicker').value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,4);
   const look=CEO_LOOKS[tk]||DEFAULT_CEO;
   if(!ASSETS.av[look.avatar]){starting=true;$('goBtn').disabled=true;$('goBtn').textContent='Fetching the CEO…';
     try{const gl=new GLTFLoader();gl.setMeshoptDecoder(MeshoptDecoder);await loadAvatar(gl,look.avatar);}catch(e){}
@@ -1324,6 +1361,12 @@ const mNdc=new THREE.Vector2(0,.1),ray=new THREE.Raycaster(),zPlane=new THREE.Pl
 addEventListener('pointermove',e=>{mNdc.set(e.clientX/innerWidth*2-1,-(e.clientY/innerHeight)*2+1);});
 canvas.addEventListener('pointerdown',e=>{e.preventDefault();mNdc.set(e.clientX/innerWidth*2-1,-(e.clientY/innerHeight)*2+1);playerClap(keyHardness());});
 $('clapBtn').addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();playerClap(keyHardness());});
+// mobile: kill double-tap / pinch zoom while mashing
+for(const el of [$('clapBtn'),$('ringWrap'),canvas])el.addEventListener('touchstart',e=>{if(e.cancelable)e.preventDefault();},{passive:false});
+addEventListener('dblclick',e=>e.preventDefault(),{passive:false});
+for(const ev of ['gesturestart','gesturechange','gestureend'])document.addEventListener(ev,e=>e.preventDefault(),{passive:false});
+document.addEventListener('touchmove',e=>{if(e.touches.length>1&&e.cancelable)e.preventDefault();},{passive:false});
+let _lastTE=0;document.addEventListener('touchend',e=>{const n=Date.now();if(n-_lastTE<320&&e.cancelable&&!e.target.closest('input,.item,.seg,.chips,.big,.ibtn'))e.preventDefault();_lastTE=n;},{passive:false});
 $('micBtn').addEventListener('click',e=>{e.stopPropagation();toggleMic();});
 $('gfxBtn').addEventListener('click',e=>{e.stopPropagation();cycleQuality();});
 addEventListener('keydown',e=>{
@@ -1333,9 +1376,12 @@ addEventListener('keydown',e=>{
 });
 
 // ---------- start screen ----------
-PRESETS.forEach(([t,n],i)=>{const b=document.createElement('button');b.className='chip'+(i<3?' hot':'');b.textContent='$'+t;b.onclick=()=>{$('inTicker').value=t;$('inName').value=n;if(ceo&&state==='menu'){const L=CEO_LOOKS[t]||DEFAULT_CEO;if(ASSETS.av&&ASSETS.av[L.avatar])setCEO(L);}};$('chips').appendChild(b);});
-$('inTicker').addEventListener('input',e=>{e.target.value=e.target.value.toUpperCase().replace(/[^A-Z0-9]/g,'');});
-[17,25,42,69].forEach(p=>{const b=document.createElement('button');b.textContent='$'+p;if(p===25)b.classList.add('sel');b.onclick=()=>{ipo=p;[...$('segPrice').children].forEach(x=>x.classList.remove('sel'));b.classList.add('sel');};$('segPrice').appendChild(b);});
+PRESETS.forEach(([t,n,px],i)=>{const b=document.createElement('button');b.className='chip'+(i<3?' hot':'');b.textContent='$'+t;b.onclick=()=>{$('inTicker').value=t;$('inName').value=n;setPrice(px||25);if(ceo&&state==='menu'){const L=CEO_LOOKS[t]||DEFAULT_CEO;if(ASSETS.av&&ASSETS.av[L.avatar])setCEO(L);}};$('chips').appendChild(b);});
+$('inTicker').addEventListener('input',e=>{e.target.value=e.target.value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,4);});
+[17,25,42,69,0].forEach(p=>{const b=document.createElement('button');b.dataset.p=p;b.textContent='$'+p;if(!p){b.id='realPx';b.style.display='none';}b.onclick=()=>setPrice(+b.dataset.p);$('segPrice').appendChild(b);});
+function setPrice(p){ipo=p;const r=$('realPx');const std=[17,25,42,69].includes(p);r.style.display=std?'none':'';if(!std){r.dataset.p=p;r.textContent='$'+p;r.title='Real IPO price';}
+  [...$('segPrice').children].forEach(x=>x.classList.toggle('sel',+x.dataset.p===p&&x.style.display!=='none'));}
+setPrice(83);
 $('goBtn').onclick=startGame;
 try{const best=JSON.parse(store.get('clapdaq_best')||'{}');const top=Object.entries(best).sort((a,b)=>b[1]-a[1]).slice(0,3);
   if(top.length)$('best').textContent='🏆 Best runs: '+top.map(([k,v])=>`$${k} ${v>=100?fmtInt(v):v.toFixed(1)}×`).join(' · ');}catch(e){}
@@ -1356,7 +1402,7 @@ async function loadAssets(){
   ASSETS.av={};
   const gl=new GLTFLoader(manager);gl.setMeshoptDecoder(MeshoptDecoder);
   const hdr=new RGBELoader(manager).loadAsync(HDRI_URL).then(t=>{t.mapping=THREE.EquirectangularReflectionMapping;scene.environment=pmrem.fromEquirectangular(t).texture;t.dispose();}).catch(e=>console.warn('HDRI failed, using studio fallback',e));
-  const [xbot]=await Promise.all([gl.loadAsync(ASSET_BASE+'Xbot.glb'),...AV_FRONT.map(n=>loadAvatar(gl,n)),loadAvatar(gl,CEO_LOOKS.ANTHROPIC.avatar).catch(()=>{})]);
+  const [xbot]=await Promise.all([gl.loadAsync(ASSET_BASE+'Xbot.glb'),...AV_FRONT.map(n=>loadAvatar(gl,n)),loadAvatar(gl,CEO_LOOKS.ANT.avatar).catch(()=>{})]);
   ASSETS.xbot=xbot;
   porcelain=new THREE.MeshPhysicalMaterial({color:'#ece6df',roughness:.32,clearcoat:1,clearcoatRoughness:.15,sheen:.3});
   porcelainJoint=new THREE.MeshPhysicalMaterial({color:'#1e1d22',roughness:.4,metalness:.6});
@@ -1436,6 +1482,7 @@ function step(dt){
   if(window.__camOverride){camera.position.copy(window.__camOverride.p);curLook.copy(window.__camOverride.l);camera.lookAt(curLook);camera.updateMatrixWorld();}
   camBase.set(Math.sin(T*.11)*.3+Math.sin(T*.53)*.03,2.12+rows*.2+Math.sin(T*.37)*.025,7.4+rows*.85);
   camLook.set(Math.sin(T*.07)*.12,1.74+rows*.16,0);
+  if(innerWidth<innerHeight){camLook.y-=.22;camBase.z-=.6;}
   if(halted||ctx.stare>0){camBase.z-=Math.min(2.4,1.2+rows*.6);camBase.y+=.2;camLook.y+=.3;}
   if(window.__camOverride){}
   else if(state==='intro'||state==='menu'){
@@ -1493,7 +1540,7 @@ function updateHud(){
   const st=[...CREEP_STAGES].reverse().find(s=>creepIndex>=s[0]);const cc=$('creepChip');cc.textContent='UNCANNY: '+st[1];cc.style.color=creepIndex>=90?'#ff4d4d':creepIndex>=30?'#ffb36b':'#9fe8c4';
   $('cash').textContent=fmtMoney(cash);$('income').textContent=autoP>0?`+${fmtMoney(autoP*price*.04)}/s from clappers`:'';
   $('fxTags').innerHTML=fxList.map(f=>`<span class="fxTag ${f.bad?'bad':''}">${f.label} ${Math.ceil(f.until-gameT)}s</span>`).join('')+((ctx.stare>0||ctx.idle)?'<span class="fxTag bad">THEY ARE WATCHING</span>':'');
-  if(performance.now()/1000-lastClap>.8){$('ring').style.setProperty('--h',0);$('hardLbl').textContent=ctx.idle?'WHY DID YOU STOP?':'MASH SPACE';$('hardLbl').style.color=ctx.idle?'#ff4d4d':'rgba(255,255,255,.6)';$('combo').textContent='';combo=0;}
+  if(performance.now()/1000-lastClap>.8){$('ring').style.setProperty('--h',0);$('hardLbl').textContent=ctx.idle?'WHY DID YOU STOP?':TOUCH?'MASH 👏':'MASH SPACE';$('hardLbl').style.color=ctx.idle?'#ff4d4d':'rgba(255,255,255,.6)';$('combo').textContent='';combo=0;}
   refreshShop();
 }
 window.__game={force:{convert:()=>nextConvert=0,exorcist:()=>nextExorcist=0,stalker:()=>nextStalker=0,uprise:()=>nextUprise=0,lemma:()=>nextLemma=0,robots:n=>{for(let i=0;i<n;i++){owned[ROBOT]++;placeHire(ROBOT);}recomputeCreep();},retire:()=>retireToPuglia()},get state(){return state},chars,hire:i=>hire(i),setCash:v=>cash=v,startGame,camera,ctx,get price(){return price}};
