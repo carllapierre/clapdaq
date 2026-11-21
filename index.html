@@ -284,7 +284,7 @@ const TIERS=[
   {id:'robot',icon:'🦾',name:'Volunteer Clanker',desc:'Heard the clapping from the server room. Came to help.',cost:0,rate:2.2,power:.6,creep:2,shop:false,
     lines:['🦾 A clanker wandered in from the server room. It started clapping.','🦾 Another robot joined. Nobody hired it. It knows the rhythm.','🦾 The robots heard you clapping. More are coming.','🦾 A clanker took a spot on the riser. It turned its head toward you first.']},
 ];
-const ROBOT=TIERS.findIndex(t=>t.id==='robot');
+const ROBOT=TIERS.findIndex(t=>t.id==='robot'),SMILER=TIERS.findIndex(t=>t.id==='smiler');
 // Unsolved problems your clapping proves. Each proof pumps the stock.
 const THEOREMS=[
   {name:'The Riemann Hypothesis',eq:'ζ(s)=0, 0<Re(s)<1  ⇒  Re(s)=½'},
@@ -318,6 +318,10 @@ const EVENTS=[
   {msg:'🤖 Algos detected aura. Clap impact +50% for 12s.',type:'good',fn:()=>addFx({gain:1.5,dur:12,label:'ALGO BID'})},
   {msg:'🧢 A billionaire replied "interesting" to your IPO. +15%',type:'good',fn:()=>shock(.15)},
   {msg:'📝 Community Notes added context to your IPO. −5%',type:'bad',fn:()=>{shock(-.05);cnote(pick(NOTES));}},
+  {msg:'🍋 CEO spotted touring a masseria in Puglia. Investors panic. −8%',type:'bad',fn:()=>shock(-.08)},
+  {msg:'🫒 CEO denies Puglia rumors: "I will clap until I die." +6%',type:'good',fn:()=>shock(.06)},
+  {msg:'🔓 Lock-up period expires. Insiders board flights to Bari. −10%',type:'bad',fn:()=>shock(-.10)},
+  {msg:'🎙️ CEO launches a podcast about clapping. Episode 1 is 4 hours long. +4%',type:'good',fn:()=>shock(.04)},
   {msg:'👀 Viral thread: "why haven\'t the clappers blinked" (14.2M views). −4%',type:'bad',cond:()=>creepIndex>20,fn:()=>shock(-.04)},
   {msg:'🫥 The clappers kept clapping after the stream ended. Investors call it "commitment." +6%',type:'good',cond:()=>creepIndex>60,fn:()=>shock(.06)},
 ];
@@ -328,6 +332,7 @@ const POSTS={
   creep:['why do all the clappers have the same face','zoom in on row 3. he\'s not clapping. he\'s looking at ME','livestream ended an hour ago. you can still hear clapping','the clankers are clapping in sync with my heartbeat','i paused the stream and they kept moving','does anyone else hear whispering under the applause','that\'s not a smile. that\'s just teeth','they turned to the camera at the same time. all of them.','counted the clappers twice. got different numbers.'],
   SPACEX:['{T} pricing in Mars real estate 🔴','clapping so hard it reached orbit','bro clapped through max-Q','the clappers are rehearsing for the Mars colony welcome party','{T} is the first stock to clap its way to escape velocity'],
   ANTHROPIC:['You\'re absolutely right! {T} is going up.','the clappers passed the alignment eval. that\'s the scary part','clapping in a helpful, harmless and honest way','asked an AI if i should buy {T}. it said "great question!"','context window: 200K claps'],
+  puglia:['CEO about to cash out and retire to Puglia. calling it now 🍋','IPO → lock-up ends → masseria in Puglia. the founder pipeline','he\'s clapping like a man who already put a deposit on a masseria in Puglia','new bio incoming: "ex-founder. olive oil. Puglia."','the "retiring to Puglia" → "back with a new AI startup" pipeline is 18 months','sold at the top, now making orecchiette in Puglia 🍝','CEO out-of-office: "in Puglia. do not contact. the clappers will handle it."','founder roadmap: IPO → Puglia → podcast → new startup','every founder says Puglia. none of them survive a week without Slack','he\'s going to buy a farm and make cheese. they always buy a farm and make cheese 🧀','CEO is 3 claps away from launching a podcast','next stop: silent retreat, then a Substack about the silent retreat'],
   OPENAI:['feel the AGI 👏👏👏','AGI achieved internally (it\'s just clapping)','clapping scales with compute','{T} roadmap: clap → AGI → clap harder','the clappers are a reasoning model. they reasoned that clapping is good'],
 };
 const NOTES=['The people behind the CEO are not blinking. They have not blinked since the IPO.','The applause in this video is synthetic. The clappers are not.','Clapping does not affect stock prices. (It does here.)','Several clappers appear in multiple rows at the same time.','There were 5 people on stage at the start of this video.'];
@@ -556,6 +561,24 @@ function drawWall(){
   uTex.needsUpdate=true;
 }
 
+function drawLemma(title,line){
+  const c=sx2;c.clearRect(0,0,2048,1024);
+  c.fillStyle='rgba(0,0,0,.94)';c.fillRect(0,WY(4.15),2048,WY(2.3)-WY(4.15));
+  c.textAlign='center';c.textBaseline='middle';
+  c.fillStyle='#ff8a8a';c.font='700 30px "Cambria Math","Times New Roman",serif';c.fillText(title,1024,WY(3.72),980);
+  c.fillStyle='#ff2020';c.font='italic 800 50px "Cambria Math","Times New Roman",serif';c.shadowColor='#ff0000';c.shadowBlur=18;c.fillText(line,1024,WY(3.18),980);c.shadowBlur=0;
+  sTex.needsUpdate=true;
+}
+function lemmaFact(){
+  const mins=Math.max(1,Math.round((performance.now()-startMs)/60000)),d=new Date(),hh=String(d.getHours()).padStart(2,'0'),mm=String(d.getMinutes()).padStart(2,'0');
+  const ua=navigator.userAgent,os=/Windows/.test(ua)?'WINDOWS':/iPhone|iPad/.test(ua)?'AN IPHONE':/Mac/.test(ua)?'A MAC':/Android/.test(ua)?'ANDROID':/Linux/.test(ua)?'LINUX':'A COMPUTER';
+  const q=(mNdc.y>0?'TOP':'BOTTOM')+' '+(mNdc.x>0?'RIGHT':'LEFT');const hired=owned.reduce((a,b)=>a+b,0);
+  const facts=[`YOU HAVE CLAPPED ${totalClaps.toLocaleString()} TIMES. WE COUNTED EACH ONE.`,`IT IS ${hh}:${mm} WHERE YOU ARE.`,`YOU HAVE BEEN HERE FOR ${mins} MINUTE${mins>1?'S':''}.`,
+    `YOUR CURSOR IS IN THE ${q} OF THE SCREEN.`,`YOU ARE ON ${os}. YOUR SCREEN IS ${screen.width}×${screen.height}.`,`YOU CHOSE THE TICKER $${TICK}. WE ALWAYS KNEW YOU WOULD.`,
+    hired?`YOU HIRED ${hired} OF US. YOU WILL HIRE MORE.`:`YOU HAVE NOT HIRED US YET. YOU WILL.`,idleCount?`YOU STOPPED CLAPPING ${idleCount} TIME${idleCount>1?'S':''}. WE NOTICED.`:`YOU HAVE NOT STOPPED CLAPPING. GOOD.`,
+    ctx.creepMix>.4?'YOUR CEO IS NOT SMILING ANYMORE. WE ARE.':'YOU ARE SMILING RIGHT NOW. AREN\'T YOU.','COROLLARY: YOU CANNOT STOP CLAPPING.','THERE IS NO PUGLIA.'];
+  return pick(facts);
+}
 function drawSub(text){
   const c=sx2;c.clearRect(0,0,2048,1024);
   c.fillStyle='rgba(0,0,0,.93)';c.fillRect(0,WY(4.15),2048,WY(2.3)-WY(4.15));
@@ -690,7 +713,7 @@ class Person{
     const t=this.tier>=0?TIERS[this.tier]:null;
     this.rate=t?t.rate*rand(.8,1.2):0;this.sync=!!(t&&t.sync);if(this.sync)this.rate=t.rate;
     this.oddball=!!t&&Math.random()<.14;if(this.oddball){this.sync=false;this.rate*=.35;}
-    this.tiltAmp=rand(.4,1.8);this.spasm=0;this.spasmAmt=0;this.walkIn=!!o.walkIn;
+    this.tiltAmp=rand(.4,1.8);this.exorcist=0;this.pointT=0;this.pointTgt=0;this.glance=0;this.glanceT=rand(4,8);this.spasm=0;this.spasmAmt=0;this.walkIn=!!o.walkIn;
     this.phase=Math.random();this.lastK=-1;
     this.smile=o.smile??.7;this.mouthOpen=o.mouthOpen??.15;
     const src=this.kind==='xbot'?ASSETS.xbot:ASSETS.rpm;
@@ -701,13 +724,13 @@ class Person{
       if(!m.isMesh)return;
       m.castShadow=true;m.receiveShadow=true;m.frustumCulled=false;
       if(m.morphTargetDictionary&&m.morphTargetDictionary.mouthSmile!==undefined)this.morphs.push(m);
-      const n=m.name;
+      const n=m.name;m.userData.srcMat=m.material;this.parts=this.parts||{top:[],bottom:[],skin:[],hat:null,beard:null};
       if(this.kind==='xbot'){m.material=/Joints/.test(m.material.name)?porcelainJoint:porcelain;return;}
-      if(/Outfit_Top/.test(n))m.material=clothMat(m.material,o.suit);
-      else if(/Outfit_Bottom/.test(n))m.material=clothMat(m.material,o.pants||o.suit);
-      else if(/Wolf3D_Skin|Wolf3D_Body/.test(n))m.material=skinMat(m.material,o.skin||'#ffffff',o.skinOpts);
-      else if(/Headwear/.test(n))m.visible=!!o.hat;
-      else if(/Beard/.test(n))m.visible=o.beard!==false;
+      if(/Outfit_Top/.test(n)){m.material=clothMat(m.material,o.suit);this.parts.top.push(m);}
+      else if(/Outfit_Bottom/.test(n)){m.material=clothMat(m.material,o.pants||o.suit);this.parts.bottom.push(m);}
+      else if(/Wolf3D_Skin|Wolf3D_Body/.test(n)){m.material=skinMat(m.material,o.skin||'#ffffff',o.skinOpts);this.parts.skin.push(m);}
+      else if(/Headwear/.test(n)){m.visible=!!o.hat;this.parts.hat=m;}
+      else if(/Beard/.test(n)){m.visible=o.beard!==false;this.parts.beard=m;}
       else if(/Eye(Left|Right)/.test(n)){if(o.eyeGlow)m.material=eyeGlowMat;m.userData.baseMat=m.material;(this.eyeMeshes||(this.eyeMeshes=[])).push(m);}
     });
     const r=this.rig={};for(const b of RIG_BONES)r[b]=findBone(this.root,b);
@@ -717,6 +740,13 @@ class Person{
     this.rest=[];for(const b of RIG_BONES)if(r[b])this.rest.push([r[b],r[b].quaternion.clone()]);
     if(o.eyeScale&&r.LeftEye){r.LeftEye.scale.setScalar(o.eyeScale);r.RightEye.scale.setScalar(o.eyeScale);}
     scene.add(this.g);chars.push(this);
+  }
+  becomeCEO(){
+    if(this.kind==='xbot'||this.isCEO||this.becameCEO||!ceo||!this.parts)return false;this.becameCEO=true;const L=ceo.o;
+    for(const m of this.parts.top)m.material=clothMat(m.userData.srcMat,L.suit);
+    for(const m of this.parts.bottom)m.material=clothMat(m.userData.srcMat,L.suit);
+    for(const m of this.parts.skin)m.material=skinMat(m.userData.srcMat,L.skin,this.o.skinOpts);
+    if(this.parts.hat)this.parts.hat.visible=true;if(this.parts.beard)this.parts.beard.visible=true;return true;
   }
   setGlow(on){for(const m of this.eyeMeshes||[])m.material=on?eyeGlowMat:m.userData.baseMat;}
   place(x,y,z,ry=0){this.baseZ=z;this.zOff=0;this.baseX=x;this.g.position.set(x,y,z);if(this.walkIn){this.spawn=1;this.walkT=0;this.g.position.x=x+(x<0?-7:7);}this.g.rotation.y=ry;this.baseY=y;if(this.spawn<1)this.g.position.y=y-2.4;}
@@ -748,7 +778,8 @@ class Person{
       roll=Math.sin(t*.37+this.seed)*Math.min(.05*this.creep,.38)*this.tiltAmp*(frozen?1.6:1);
       if(this.oddball&&!watching){const C=ctx.cam;_lv.set(C.x-g.position.x,C.y-headY,C.z-g.position.z).applyAxisAngle(_up,-g.rotation.y);yaw=clamp(Math.atan2(_lv.x,_lv.z),-1,1);pitch=clamp(-Math.atan2(_lv.y,Math.hypot(_lv.x,_lv.z)),-.5,.5);roll=.45*Math.sign(Math.sin(this.seed));}
       k=dt*(this.tier>=5?1.4:this.tier>=3?3:6);
-      if(this.twitch>0){this.twitch-=dt;yaw+=this.twYaw;roll+=this.twRoll;k=1;}
+      if(this.exorcist>0){this.exorcist-=dt;const ph=1-this.exorcist/this.exDur;yaw=this.exDir*3.05*Math.min(1,ph/.75);pitch=-.05;roll=.15*this.exDir;k=1;if(this.exorcist<=0){this.hYaw=yaw=0;}}
+      else if(this.twitch>0){this.twitch-=dt;yaw+=this.twYaw;roll+=this.twRoll;k=1;}
       else if(!frozen&&Math.random()<dt*.012*this.creep){this.twitch=rand(.1,.25);this.twYaw=rand(-.8,.8);this.twRoll=rand(-.5,.5);}
       this.lean+=((frozen?.16:0)-this.lean)*Math.min(1,dt*2);
       if(this.spawn>=1)g.position.y=this.baseY;
@@ -760,9 +791,11 @@ class Person{
       yaw=this.lookYaw;pitch=this.lookPitch+.06*this.laugh*Math.abs(Math.sin(t*8+this.seed));
       roll=Math.sin(t*1.1+this.seed)*.04;
       if(watching&&ctx.creepIndex>0){yaw=(this.seed%2>1?1:-1)*1.1;pitch=.05;roll=0;k=dt*3;}
+      if(this.isCEO&&ctx.creepMix>.25){this.glanceT-=dt;if(this.glanceT<0){this.glance=rand(.9,1.6);this.glanceDir=pick([-1,1]);this.glanceT=rand(3,7)/(.5+ctx.creepMix);}if(this.glance>0){this.glance-=dt;yaw=this.glanceDir*1.35;pitch=.08;k=dt*7;}}
       this.hop*=Math.exp(-dt*12);
       g.position.y=this.baseY+this.hop*8;
     }
+    this.pointT+=(this.pointTgt-this.pointT)*Math.min(1,dt*.55);
     const kk=Math.min(1,k);this.hYaw+=(yaw-this.hYaw)*kk;this.hPitch+=(pitch-this.hPitch)*kk;this.hRoll+=(roll-this.hRoll)*kk;
     this.pose(ctx,creepy,watching);
   }
@@ -782,6 +815,8 @@ class Person{
     for(const side of [1,-1]){
       const A=side>0?r.LeftArm:r.RightArm,F=side>0?r.LeftForeArm:r.RightForeArm,H=side>0?r.LeftHand:r.RightHand,M=side>0?r.LeftHandMiddle1:r.RightHandMiddle1,T=side>0?r.LeftHandThumb1:r.RightHandThumb1;
       const S=A.getWorldPosition(_S);
+      if(side<0&&this.pointT>.02){const Dm=_t2.subVectors(ctx.mouse,S).normalize();const Dr=_dd.set(0,-1,0).addScaledVector(fwd,.35).normalize();const D=_dir.copy(Dr).lerp(Dm,this.pointT).normalize();
+        aimBone(A,F,D);aimBone(F,H,D);if(M&&T)aimBone2(H,M,T,D,_t1.copy(up));continue;}
       const Ht=_Ht.copy(ch).addScaledVector(fwd,.29*sc).addScaledVector(up,(-.17+.04*(1-this.open))*sc).addScaledVector(lft,side*(.045+.16*op)*sc);
       const d=_dd.subVectors(Ht,S);let L=d.length();const L1=r.L1,L2=r.L2,mxl=L1+L2-.004*sc;if(L>mxl){d.multiplyScalar(mxl/L);L=mxl;}
       const dir=_dir.copy(d).divideScalar(L);const a=(L1*L1-L2*L2+L*L)/(2*L),hh=Math.sqrt(Math.max(0,L1*L1-a*a));
@@ -808,7 +843,11 @@ class Person{
     const E=ctx.energy,base=this.smile+(creepy?ctx.creepMix*1.2:ctx.creepMix*2.4);
     const sm=base*(.08+.92*E)+E*E*(creepy?2.2:1.2)+this.pulse*(.4+1.1*E)+this.spasmAmt;
     const mo=(this.mouthOpen+.25*this.laugh*Math.abs(Math.sin(t*8+this.seed))*(creepy?0:1))*(.1+.9*E)+E*E*.5+this.pulse*.25*E+this.spasmAmt*.25;
-    for(const m of this.morphs){const d=m.morphTargetDictionary;m.morphTargetInfluences[d.mouthSmile]=sm;m.morphTargetInfluences[d.mouthOpen]=mo;}
+    let SM=sm,MO=mo;
+    if(this.tier===SMILER){SM+=E*E*4.5+ctx.creepMix*1.5;MO+=E*1.8+ctx.creepMix*.6;}
+    if(this.isCEO){const f=1-Math.min(1,ctx.creepMix*1.15);SM*=f;MO=MO*f+ctx.creepMix*.3;}
+    if(creepy&&r.LeftEye){const es=(this.o.eyeScale||1)*(1+E*.1),ey=es*(1+(this.tier===SMILER?E*.4:E*.12));r.LeftEye.scale.set(es,ey,es);r.RightEye.scale.set(es,ey,es);}
+    for(const m of this.morphs){const d=m.morphTargetDictionary;m.morphTargetInfluences[d.mouthSmile]=SM;m.morphTargetInfluences[d.mouthOpen]=MO;}
   }
 }
 const _up=new THREE.Vector3(0,1,0),_fw=V3(),_lf=V3(),_s1=V3(),_s2=V3(),_ch=V3(),_S=V3(),_Ht=V3(),_dd=V3(),_dir=V3(),_pole=V3(),_E=V3(),_Hp=V3(),_t1=V3(),_t2=V3(),_lv=V3(),_cq2=QT();
@@ -879,8 +918,8 @@ function initAudio(){
   const am=AC.createGain();const lfo=AC.createOscillator();lfo.frequency.value=13;const lg=AC.createGain();lg.gain.value=.35;lfo.connect(lg).connect(am.gain);am.gain.value=.65;lfo.start();
   bedGain=AC.createGain();bedGain.gain.value=0;src.connect(bp).connect(am).connect(bedGain).connect(master);src.start();
 }
-function playClap(vol=.5,pan=0,tone=1){
-  if(!AC)return;const t=AC.currentTime;
+function playClap(vol=.5,pan=0,tone=1,when=0,lp=0){
+  if(!AC)return;const t=AC.currentTime+when;
   const src=AC.createBufferSource();src.buffer=noiseBuf;
   const bp=AC.createBiquadFilter();bp.type='bandpass';bp.frequency.value=rand(900,1600)*tone;bp.Q.value=.9;
   const hp=AC.createBiquadFilter();hp.type='highpass';hp.frequency.value=350;
@@ -888,7 +927,9 @@ function playClap(vol=.5,pan=0,tone=1){
   for(let k=0;k<3;k++){const tk=t+k*.008;g.gain.linearRampToValueAtTime(vol*(1-k*.2),tk+.001);g.gain.exponentialRampToValueAtTime(vol*.12,tk+.007);}
   g.gain.exponentialRampToValueAtTime(.0001,t+.05+.1*vol);
   const p=AC.createStereoPanner();p.pan.value=pan;
-  src.connect(bp).connect(hp).connect(g).connect(p).connect(master);src.start(t,Math.random()*1.5,.3);
+  if(lp){const l=AC.createBiquadFilter();l.type='lowpass';l.frequency.value=lp;src.connect(bp).connect(hp).connect(l).connect(g).connect(p).connect(master);}
+  else src.connect(bp).connect(hp).connect(g).connect(p).connect(master);
+  src.start(t,Math.random()*1.5,.3);
 }
 function playThump(v){if(!AC)return;const t=AC.currentTime;const o=AC.createOscillator();o.frequency.setValueAtTime(140,t);o.frequency.exponentialRampToValueAtTime(45,t+.15);
   const g=AC.createGain();g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.0001,t+.2);o.connect(g).connect(master);o.start(t);o.stop(t+.22);}
@@ -908,6 +949,17 @@ function playDrone(dur=4.5){
   const ng=AC.createGain();ng.gain.value=.12;n.connect(bp).connect(ng).connect(g);n.start(t,0,dur);
 }
 
+function playEcho(){
+  if(!AC)return;const n=3+(Math.random()*5|0),iv=clamp(lastIntv,.16,.5),pan=pick([-1,1])*rand(.7,1);
+  for(let k=0;k<n;k++)playClap(.26*(1-k/n)+.04,pan,rand(.8,.95),.25+k*iv*rand(.95,1.08),rand(900,1600));
+  if(Math.random()<.35)setTimeout(()=>xpost(pick(CREEP_HANDLES)[0],'👂',pick(['he stopped clapping. who kept going?','there was clapping AFTER he stopped. listen with headphones.','left channel. someone behind the camera is still clapping.']),'creep'),1800);
+}
+function playCreak(dur=3){
+  if(!AC)return;const t=AC.currentTime;const n=AC.createBufferSource();n.buffer=noiseBuf;const bp=AC.createBiquadFilter();bp.type='bandpass';bp.Q.value=18;
+  bp.frequency.setValueAtTime(180,t);bp.frequency.linearRampToValueAtTime(420,t+dur);const g=AC.createGain();g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.5,t+.2);g.gain.setValueAtTime(.5,t+dur-.1);g.gain.linearRampToValueAtTime(0,t+dur);
+  const am=AC.createGain();const lfo=AC.createOscillator();lfo.frequency.value=22;const lg=AC.createGain();lg.gain.value=.5;lfo.connect(lg).connect(am.gain);lfo.start(t);lfo.stop(t+dur);
+  n.connect(bp).connect(am).connect(g).connect(master);n.start(t,0,dur);
+}
 function playWhisper(dur=2.5){
   if(!AC)return;const t=AC.currentTime;
   for(let v=0;v<3;v++){const n=AC.createBufferSource();n.buffer=noiseBuf;const bp=AC.createBiquadFilter();bp.type='bandpass';bp.Q.value=7;
@@ -984,7 +1036,7 @@ function proveTheorem(){
 function playerClap(h,fromMic=false){
   if(state==='menu'||!ceo)return;
   initAudio();ceo.clap(h);
-  const now=performance.now()/1000;const dtc=now-lastClap;lastClap=now;
+  const now=performance.now()/1000;const dtc=now-lastClap;lastClap=now;if(dtc<.6)lastIntv=dtc;echoArmed=true;
   if(!fromMic&&!micOn)playClap(.3+.25*h,0,1+(h-1)*.08);
   if(h>1.4)playThump(.25*(h-1.2));
   const b=$('clapBtn');b.classList.add('hit');setTimeout(()=>b.classList.remove('hit'),60);
@@ -1041,7 +1093,7 @@ function refreshShop(){
 }
 
 // ---------- flow ----------
-const ctx={energy:0,dt:0,closeup:null,idle:false,blackout:0,creepMix:0,t:0,syncT:0,rateMult:1,halted:false,stare:0,hype:0,mouse:new THREE.Vector3(0,2,6),cam:camera.position,claps:0,softClaps:0,trading:false,creepIndex:0};
+const ctx={stalker:null,energy:0,dt:0,closeup:null,idle:false,blackout:0,creepMix:0,t:0,syncT:0,rateMult:1,halted:false,stare:0,hype:0,mouse:new THREE.Vector3(0,2,6),cam:camera.position,claps:0,softClaps:0,trading:false,creepIndex:0};
 let introT=0;
 function startGame(){
   const tk=$('inTicker').value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,10);
@@ -1049,7 +1101,7 @@ function startGame(){
   price=dayOpen=hi=dayHi=dayLo=ipo;hist=[price];
   initAudio();drawPodium();drawMarquee();drawWall();buildShop();refreshShop();
   $('start').classList.add('hidden');
-  state='intro';introT=0;
+  state='intro';introT=0;startMs=performance.now();
   setTimeout(()=>banner(`WELCOME $${TICK}<small>${COMPANY.toUpperCase()} · CLAPDAQ</small>`,'#ffd76a'),700);
 }
 function openMarket(first){
@@ -1075,8 +1127,20 @@ function closeMarket(){
       </div>
       <div class="quote">${rec?'🏆 New all-time high for $'+TICK+'! ':''}${creepIndex>90?'"The clappers asked if they can stay overnight. They did not wait for an answer."':ch>=0?'"Analysts attribute today\'s rally to, quote, \'an incredible amount of clapping.\'"':'"Investors cited concerns about insufficient clapping."'}</div>`,
       `▶ DAY ${day+1}: KEEP CLAPPING`,()=>{day++;dayT=0;dayOpen=price;dayHi=dayLo=price;hist=[price];dayClaps=0;openMarket(false);},
-      '🏳 Go private (restart)',()=>location.reload());
+      '🍋 Cash out & retire to Puglia',retireToPuglia);
   },2400);
+}
+function retireToPuglia(){
+  $('modal').classList.add('hidden');state='over';ctx.trading=false;
+  const stake=price*SHARES*.18,robots=owned[ROBOT];
+  setTimeout(()=>showModal('LIQUIDITY EVENT','You retired to Puglia 🍋',
+    `<p class="quote" style="font-style:normal;opacity:.9">You sold your $${TICK} stake for <b>${fmtMoney(stake)}</b>, bought a masseria with 400 olive trees, and changed your bio to "ex-founder. olive oil. Puglia."</p>
+     <p class="quote" style="margin-top:10px">You make orecchiette now. You do not check Slack. You sleep with the windows open.</p>
+     ${creepIndex>30?`<p class="quote" style="margin-top:10px;color:#ff9a9a">Every morning at 9:30 sharp, you hear clapping from the olive grove.</p>`:''}
+     ${robots>3?`<p class="quote" style="margin-top:6px;color:#ff9a9a">The clankers followed you. ${robots} of them. They are pruning the olive trees. In sync.</p>`:''}
+     ${creepIndex>90?`<p class="quote" style="margin-top:6px;color:#ff6b6b">You never told anyone where the masseria is. They are smiling at the gate.</p>`:''}`,
+    '🔔 Come out of retirement (Re-IPO)',()=>location.reload(),'',null),600);
+  ringBell(1);
 }
 function delist(){
   state='over';ctx.trading=false;playDrone(6);
@@ -1095,6 +1159,7 @@ function startHalt(){halted=true;haltT=4.5;lastHalt=gameT;$('haltOv').classList.
   news('⛔ LIMIT UP — circuit breaker tripped. Your clappers have stopped. They are looking at you.','creep');}
 
 // ---------- simulation ----------
+let lastIntv=.3,echoArmed=false,nextConvert=40,nextExorcist=30,nextStalker=35,stalkT=0,nextUprise=20,uprising=false,lemma=null,nextLemma=25,lemmaN=0,idleCount=0,startMs=performance.now();
 let proofIdx=0,proofPts=0,proofMult=1,robotNext=35,robotStep=35,nextCloseup=22;
 let prevPrice=price,nextPost=10,lastMood=-99,nextBlackout=45,nextSub=30,subT=0;
 function sim(dt){
@@ -1119,7 +1184,7 @@ function sim(dt){
   }
   if(gameT>nextEvent){nextEvent=gameT+rand(16,28);const ev=pick(EVENTS.filter(e=>!e.cond||e.cond()));news(typeof ev.msg==='function'?ev.msg():ev.msg,ev.type);ev.fn();}
   if(creepIndex>=8&&gameT>nextCreepLine){nextCreepLine=gameT+rand(18,32);socialPost('creep');}
-  if(gameT>nextPost){nextPost=gameT+rand(7,12);const r=Math.random();socialPost(creepIndex>=30&&r<.35?'creep':r<.6&&POSTS[TICK]?'ticker':(hist.length>20&&price<hist[hist.length-20]?'down':'up'));}
+  if(gameT>nextPost){nextPost=gameT+rand(7,12);const r=Math.random();if(r<.18){socialPost('puglia');}else socialPost(creepIndex>=30&&r<.35?'creep':r<.6&&POSTS[TICK]?'ticker':(hist.length>20&&price<hist[hist.length-20]?'down':'up'));}
   if(gameT>lastMood+14&&hist.length>40){const w=hist.slice(-40);let mx=-Infinity,mn=Infinity;for(const v of w){if(v>mx)mx=v;if(v<mn)mn=v;}
     if(price<mx*.9){lastMood=gameT;banner(`IT'S SO OVER<small>$${TICK} ${((price/mx-1)*100).toFixed(1)}%</small>`,'#ff3d63');socialPost('down');}
     else if(price>mn*1.15&&mn<mx*.95){lastMood=gameT;banner(`WE'RE SO BACK<small>$${TICK} +${((price/mn-1)*100).toFixed(1)}%</small>`,'#19e68c');socialPost('up');}}
@@ -1202,13 +1267,32 @@ function step(dt){
   ctx.halted=halted;ctx.creepIndex=creepIndex;ctx.creepMix=creepMix;
   {const tgt=(halted||ctx.stare>0)?0:clamp(Math.log(1+playerP*1.5+autoP*.6)/Math.log(1+45),0,1);ctx.energy+=(tgt-ctx.energy)*Math.min(1,dt*(tgt>ctx.energy?4:1.3));}
   const idleNow=state==='trading'&&!halted&&creepIndex>=8&&(performance.now()/1000-lastClap)>6;
-  if(idleNow&&!ctx.idle){drawSub('WHY DID YOU STOP CLAPPING?');playWhisper(2.6);}
+  if(idleNow&&!ctx.idle){idleCount++;drawSub('WHY DID YOU STOP CLAPPING?');playWhisper(2.6);}
   ctx.idle=idleNow;
   if(ctx.blackout>0){ctx.blackout-=dt;if(ctx.blackout<=0){for(const c of chars){c.setGlow(false);if(c.tier>=0)c.zOff=Math.min(.45,c.zOff+.15);}xpost('frame_by_frame','🔎','the lights came back on and they were closer. rewatch it.','creep');}}
   else if(state==='trading'&&!halted&&creepIndex>=30&&gameT>nextBlackout){nextBlackout=gameT+rand(35,60);ctx.blackout=1.9;for(const c of chars)c.setGlow(true);playThump(.6);playWhisper(1.9);}
   if(subT>0)subT-=dt;
   else if(state==='trading'&&creepIndex>=60&&gameT>nextSub&&!ctx.idle){nextSub=gameT+rand(18,35);drawSub(pick(SUBLIMINAL));subT=.13;}
-  wallMat.uniforms.sub.value=(ctx.idle||subT>0)?1:0;
+  // ---- creepiness directors ----
+  const trading=state==='trading'&&!halted,hires=chars.filter(c=>c.tier>=0&&!c.dying&&c.spawn>=1&&(!c.walkIn||c.walkT>=1));
+  if(echoArmed&&state==='trading'&&creepIndex>=6&&performance.now()/1000-lastClap>1.1){echoArmed=false;if(Math.random()<.65)playEcho();}
+  // #1 everyone slowly becomes the CEO
+  if(trading&&creepIndex>=30&&gameT>nextConvert){nextConvert=gameT+rand(12,24);const pool=hires.filter(c=>c.kind!=='xbot'&&!c.becameCEO);
+    if(pool.length&&pick(pool).becomeCEO()){flash(.06);if(Math.random()<.5)xpost(pick(CREEP_HANDLES)[0],'🪞',pick(['is it just me or are they all starting to look like the CEO','another one has his face now','count the moustaches. it was 2 an hour ago.','they\'re wearing his suit. they\'re wearing his face.']),'creep');}}
+  // #5 slow 180° head turn
+  if(trading&&creepIndex>=15&&gameT>nextExorcist){nextExorcist=gameT+rand(18,32);const pool=hires.filter(c=>c.exorcist<=0);if(pool.length){const c=pick(pool);c.exDur=rand(3.5,5);c.exorcist=c.exDur;c.exDir=pick([-1,1]);playCreak(c.exDur*.75);}}
+  // #17 cursor stalker
+  if(ctx.stalker){stalkT-=dt;if(stalkT<=0)ctx.stalker.pointTgt=0;if(stalkT<-4||ctx.stalker.dying){ctx.stalker.pointTgt=0;ctx.stalker.pointT=0;ctx.stalker=null;}}
+  else if(trading&&creepIndex>=20&&gameT>nextStalker){nextStalker=gameT+rand(30,50);const pool=hires.filter(c=>c.exorcist<=0);if(pool.length){ctx.stalker=pick(pool);ctx.stalker.pointTgt=1;stalkT=rand(9,14);setTimeout(()=>xpost(pick(CREEP_HANDLES)[0],'👉',pick(['one of them is pointing at my cursor. i moved it. he followed.','why is row '+(1+(Math.random()*4|0))+' pointing at the screen','DON\'T move your mouse. he\'s pointing at it.']),'creep'),2500);}}
+  // #18 robot uprising: clankers replace the humans
+  if(trading&&owned[ROBOT]>=8&&gameT>nextUprise){nextUprise=gameT+rand(14,24);const sl=SLOTS.filter(x=>x.occ&&!x.occ.dying&&x.occ.kind!=='xbot');
+    if(sl.length){const x=pick(sl);x.occ.kill();const p=new Person({...tierLook(ROBOT),tier:ROBOT,creep:TIERS[ROBOT].creep});p.place(x.x,x.y,x.z,-x.x*.05);x.occ=p;
+      if(!uprising){uprising=true;banner('🤖 THE CLANKERS ARE REPLACING THEM','#ff8a8a');}
+      if(Math.random()<.5)xpost('clanker_watch','🤖',pick(['another human just sank into the floor. a robot took his spot.','the robots aren\'t hiring. they\'re replacing.','ratio of humans to clankers on stage is getting worse every minute','nobody is asking where the humans go']),'creep');}}
+  // #19 the Clapping Conjecture writes itself — lemmas about YOU
+  if(lemma){lemma.t+=dt;const n=Math.min(lemma.text.length,Math.floor(lemma.t*24));if(n!==lemma.n){lemma.n=n;drawLemma(lemma.title,lemma.text.slice(0,n)+(n<lemma.text.length?'▌':''));}if(lemma.t>lemma.text.length/24+2.6||ctx.idle)lemma=null;}
+  else if(trading&&(creepIndex>=60||proofIdx>=3)&&gameT>nextLemma&&!ctx.idle&&subT<=0){nextLemma=gameT+rand(14,26);lemmaN++;lemma={title:`THE CLAPPING CONJECTURE — LEMMA ${lemmaN}`,text:lemmaFact(),t:0,n:-1};playWhisper(1.5);}
+  wallMat.uniforms.sub.value=(ctx.idle||subT>0||lemma)?1:0;
   if(!halted&&ctx.stare<=0)ctx.syncT+=dt*speedMult()*fx.autoMult;
   ctx.rateMult=speedMult()*fx.autoMult;
   pollMic();
@@ -1289,7 +1373,7 @@ function updateHud(){
   if(performance.now()/1000-lastClap>.8){$('ring').style.setProperty('--h',0);$('hardLbl').textContent=ctx.idle?'WHY DID YOU STOP?':'MASH SPACE';$('hardLbl').style.color=ctx.idle?'#ff4d4d':'rgba(255,255,255,.6)';$('combo').textContent='';combo=0;}
   refreshShop();
 }
-window.__game={get state(){return state},chars,hire:i=>hire(i),setCash:v=>cash=v,startGame,camera,ctx,get price(){return price}};
+window.__game={force:{convert:()=>nextConvert=0,exorcist:()=>nextExorcist=0,stalker:()=>nextStalker=0,uprise:()=>nextUprise=0,lemma:()=>nextLemma=0,robots:n=>{for(let i=0;i<n;i++){owned[ROBOT]++;placeHire(ROBOT);}recomputeCreep();},retire:()=>retireToPuglia()},get state(){return state},chars,hire:i=>hire(i),setCash:v=>cash=v,startGame,camera,ctx,get price(){return price}};
 frame();
 </script>
 </body>
